@@ -145,11 +145,11 @@ const CONFIG = {
   fadeOutTime: 0.8,
   positionSmoothingTime: 0.05,
   
-  // Ustawienia 3D
+  // Ustawienia 3D - model liniowy: 100% przy 1m → 4% przy 100m
   audio3d: {
-    refDistance: 2,
-    rolloffFactor: 0.01,
-    maxDistance: 10000
+    refDistance: 1,
+    rolloffFactor: 0.96,
+    maxDistance: 100
   }
 };
 
@@ -308,7 +308,7 @@ async function initAudioContext() {
       
       objState.pannerNode = state.audioContext.createPanner();
       objState.pannerNode.panningModel = 'HRTF';
-      objState.pannerNode.distanceModel = 'inverse';
+      objState.pannerNode.distanceModel = 'linear';
       objState.pannerNode.refDistance = CONFIG.audio3d.refDistance;
       objState.pannerNode.rolloffFactor = CONFIG.audio3d.rolloffFactor;
       objState.pannerNode.maxDistance = CONFIG.audio3d.maxDistance;
