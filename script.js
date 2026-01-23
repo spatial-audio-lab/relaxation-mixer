@@ -1055,12 +1055,14 @@ function renderSpaceList() {
   
   container.innerHTML = CONFIG.scenes.map(scene => `
     <div class="item-card" data-id="${scene.id}">
-      <div class="item-icon">${scene.icon}</div>
-      <div class="item-info">
-        <div class="item-name">${scene.name}</div>
-        <div class="item-desc">${scene.description}</div>
+      <div class="item-card-header">
+        <div class="item-icon">${scene.icon}</div>
+        <div class="item-info">
+          <div class="item-name">${scene.name}</div>
+          <div class="item-desc">${scene.description}</div>
+        </div>
+        <div class="item-status"></div>
       </div>
-      <div class="item-status"></div>
     </div>
   `).join('');
 }
@@ -1145,21 +1147,27 @@ function syncSpaceUI() {
   document.querySelectorAll('#spaceList .item-card').forEach(card => {
     const id = card.dataset.id;
     const isActive = state.space.active === id;
+
+    // Update active/expanded state
     card.classList.toggle('active', isActive);
+    card.classList.toggle('expanded', isActive); // Expand for volume slider
+
+    // Status light
+    const status = card.querySelector('.item-status');
+    if (status) {
+        status.style.opacity = isActive ? '1' : '0.3';
+        status.style.backgroundColor = isActive ? 'var(--violet-mist)' : 'var(--text-secondary)';
+    }
   });
   
-  // Suwak głośności
-  const volumeControl = document.getElementById('spaceVolumeControl');
-  if (volumeControl) {
-    volumeControl.classList.toggle('visible', state.space.active !== null);
-    
-    if (state.space.active) {
+  // Suwak głośności (Globalny - removed, now embedded)
+  // Ensure the embedded slider reflects current volume
+  if (state.space.active) {
       const vol = state.space.volumes[state.space.active] ?? 0.5;
       const slider = document.getElementById('spaceVolume');
       const value = document.getElementById('spaceVolumeValue');
       if (slider) slider.value = Math.round(vol * 100);
       if (value) value.textContent = Math.round(vol * 100) + '%';
-    }
   }
 }
 
@@ -1591,14 +1599,7 @@ function setupEventHandlers() {
     
     const id = card.dataset.id;
 
-    // Logic: If already active/expanded, maybe toggle? Or do nothing?
-    // User requirement: "Player shows up after pressing card".
-
     if (state.meditation.selected === id) {
-      // If user clicks the header of the active card, maybe collapse?
-      // Or just ignore. Let's toggle for better UX.
-      // But if we toggle off, we should stop meditation? Or just hide controls?
-      // Let's keep it simple: If same, do nothing (keep expanded).
       return;
     }
 
@@ -1609,8 +1610,6 @@ function setupEventHandlers() {
     const playerElement = document.getElementById('meditation-player');
     const container = document.getElementById('hidden-player-container');
 
-    // If player is currently somewhere else, move it back to container temp or directly to new card
-    // First, append to new card
     if (playerElement) {
         card.appendChild(playerElement);
     }
@@ -1674,14 +1673,30 @@ function setupEventHandlers() {
   
   // === Space Controls ===
   document.getElementById('spaceList')?.addEventListener('click', async (e) => {
+    // Accordion Logic for Spaces (Volume slider)
     const card = e.target.closest('.item-card');
+    if (e.target.closest('.embedded-volume')) return; // Ignore clicks on the slider itself
+
     if (!card) return;
     
     const id = card.dataset.id;
     
     if (state.space.active === id) {
       stopScene(id);
+      // Move slider back to hidden? Handled by stopScene updating UI which removes expanded class.
+      // But we should physically move it to be safe or just hide it.
+      // Actually stopScene just updates state, syncUI handles visuals.
+      // But we need to move the DOM element out or syncUI will be confused?
+      // Let's rely on syncSpaceUI or move it explicitly.
+      const sliderContainer = document.getElementById('space-volume-embedded');
+      const hiddenContainer = document.getElementById('hidden-space-volume-container');
+      if (sliderContainer && hiddenContainer) hiddenContainer.appendChild(sliderContainer);
     } else {
+      // Move slider to new card before selecting
+      const sliderContainer = document.getElementById('space-volume-embedded');
+      if (sliderContainer) {
+          card.appendChild(sliderContainer);
+      }
       await selectScene(id);
     }
   });

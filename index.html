@@ -180,12 +180,16 @@
           <div class="item-list" id="spaceList">
             <!-- Generowane przez JS -->
           </div>
+        </div>
 
-          <!-- Suwak głośności (widoczny gdy aktywna przestrzeń) -->
-          <div class="space-volume-control" id="spaceVolumeControl">
-            <label>🔊 Głośność:</label>
-            <input type="range" min="0" max="100" value="50" id="spaceVolume" aria-label="Głośność przestrzeni">
-            <span id="spaceVolumeValue">50%</span>
+        <!-- Hidden Space Volume Template -->
+        <div id="hidden-space-volume-container" style="display: none;">
+          <div id="space-volume-embedded" class="embedded-volume">
+            <div class="volume-row">
+              <span>🔊</span>
+              <input type="range" min="0" max="100" value="50" id="spaceVolume" aria-label="Głośność przestrzeni">
+              <span class="volume-value" id="spaceVolumeValue">50%</span>
+            </div>
           </div>
         </div>
 

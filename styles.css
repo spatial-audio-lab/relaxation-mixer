@@ -1446,3 +1446,16 @@ input:focus-visible,
      See `renderMeditationList` update plan.
   */
 }
+/* Embedded Volume Slider */
+.embedded-volume {
+  padding: 0 var(--space-md) var(--space-md) var(--space-md);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 0;
+  animation: slideDown 0.3s ease-out;
+  display: block;
+}
+
+.embedded-volume .volume-row {
+  margin-top: var(--space-md);
+  margin-bottom: 0; /* Align nicer */
+}
