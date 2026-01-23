@@ -1348,3 +1348,101 @@ input:focus-visible,
     animation: none;
   }
 }
+
+/* ========================================
+   ACCORDION & EMBEDDED PLAYER
+   ======================================== */
+
+/* Item Card Expansion */
+.item-card {
+  display: flex;
+  flex-direction: column; /* Changed to column to stack player below */
+  align-items: stretch; /* Stretch to full width */
+  gap: 0; /* Managed by children padding */
+  padding: 0; /* Reset padding, inner elements will handle it */
+  position: relative;
+  overflow: hidden;
+  height: auto;
+  transition: all var(--transition-normal);
+}
+
+.item-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  width: 100%;
+}
+
+.item-card.expanded {
+  background: rgba(18, 24, 32, 0.95);
+  border-color: var(--cyan-glow);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Embedded Player Styles */
+.embedded-player {
+  padding: 0 var(--space-md) var(--space-md) var(--space-md);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 0;
+  animation: slideDown 0.3s ease-out;
+  display: block; /* Ensure visibility */
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.embedded-player .player-controls {
+  margin-top: var(--space-md);
+}
+
+.embedded-player .player-title {
+  display: none; /* Hide title as it is in the card header */
+}
+
+/* Fix item list layout for new structure */
+.item-list {
+  gap: var(--space-sm);
+}
+
+/* Loading Animation for Play Button */
+.btn-play-main.loading {
+  position: relative;
+  overflow: hidden;
+  pointer-events: none;
+  border-color: var(--cyan-glow);
+}
+
+.btn-play-main.loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%);
+  background-size: 100% 200%;
+  animation: fill-up 1.5s ease-in-out infinite;
+  border-radius: 50%;
+}
+
+@keyframes fill-up {
+  0% { transform: translateY(100%); }
+  50% { transform: translateY(0); }
+  100% { transform: translateY(-100%); }
+}
+
+/* Override existing item-card styles that might conflict */
+.item-card > .item-icon,
+.item-card > .item-info,
+.item-card > .item-status {
+  /* These are now wrapped in item-card-header in JS logic?
+     Wait, I need to update JS to wrap them or update CSS selectors to target children of item-card-header
+     OR just keep them direct children and use flex-wrap?
+     Flex-wrap is risky. Better to wrap header content in a div.
+     For now, let's assume I will restructure the inner HTML of the card in JS.
+     See `renderMeditationList` update plan.
+  */
+}

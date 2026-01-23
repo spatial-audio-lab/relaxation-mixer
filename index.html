@@ -112,59 +112,57 @@
           </div>
         </div>
 
-        <!-- Player -->
-        <div class="glass-card player-card">
-          <div class="player-title" id="meditationTitle">Wybierz sesję</div>
-          
-          <div class="player-controls">
-            <button class="btn-control" id="btnStopMeditation" aria-label="Stop">■</button>
-            <button class="btn-play-main" id="btnPlayMeditation" aria-label="Odtwórz">▶</button>
-          </div>
-          
-          <div class="progress-container">
-            <span class="progress-time" id="currentTime">00:00</span>
-            <div class="progress-bar" id="progressBar">
-              <div class="progress-fill" id="progressFill"></div>
-            </div>
-            <span class="progress-time" id="totalTime">00:00</span>
-          </div>
-
-          <!-- HRTF Controls -->
-          <div class="hrtf-controls">
-            <div class="hrtf-toggle">
-              <span>🎧</span>
-              <div class="toggle-switch active" id="hrtfToggle" role="switch" aria-checked="true" aria-label="Przestrzeń 3D" tabindex="0"></div>
-              <span class="toggle-label">3D</span>
-            </div>
-            <div class="position-buttons" id="voicePosition" role="group" aria-label="Pozycja dźwięku">
-              <button class="btn-position" data-pos="left" aria-label="Lewa strona">◀</button>
-              <button class="btn-position selected" data-pos="center" aria-label="Środek">●</button>
-              <button class="btn-position" data-pos="right" aria-label="Prawa strona">▶</button>
-            </div>
-          </div>
-
-          <div class="volume-row">
-            <span>🔊</span>
-            <input type="range" id="voiceVolume" min="0" max="100" value="100" aria-label="Głośność medytacji">
-            <span class="volume-value" id="voiceVolumeValue">100%</span>
-          </div>
-
-          <!-- Sync toggle -->
-          <div class="sync-toggle">
-            <span>Synchronizuj przestrzeń z końcem medytacji</span>
-            <div class="toggle-switch" id="syncToggle" role="switch" aria-checked="false" aria-label="Synchronizacja" tabindex="0"></div>
-          </div>
-
-          <!-- Loading indicator -->
-          <div class="loading-indicator" id="voiceLoading" role="status" aria-live="polite">
-            <div class="spinner"></div>
-            <span>Przygotowuję przestrzeń...</span>
-          </div>
-        </div>
-
         <!-- Lista medytacji -->
         <div class="item-list" id="meditationList">
           <!-- Generowane przez JS -->
+        </div>
+
+        <!-- Hidden Player Template / Container -->
+        <div id="hidden-player-container" style="display: none;">
+          <div id="meditation-player" class="embedded-player">
+
+            <div class="player-controls">
+              <button class="btn-control" id="btnStopMeditation" aria-label="Stop">■</button>
+              <button class="btn-play-main" id="btnPlayMeditation" aria-label="Odtwórz">▶</button>
+            </div>
+
+            <div class="progress-container">
+              <span class="progress-time" id="currentTime">00:00</span>
+              <div class="progress-bar" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+              </div>
+              <span class="progress-time" id="totalTime">00:00</span>
+            </div>
+
+            <!-- HRTF Controls -->
+            <div class="hrtf-controls">
+              <div class="hrtf-toggle">
+                <span>🎧</span>
+                <div class="toggle-switch active" id="hrtfToggle" role="switch" aria-checked="true" aria-label="Przestrzeń 3D" tabindex="0"></div>
+                <span class="toggle-label">3D</span>
+              </div>
+              <div class="position-buttons" id="voicePosition" role="group" aria-label="Pozycja dźwięku">
+                <button class="btn-position" data-pos="left" aria-label="Lewa strona">◀</button>
+                <button class="btn-position selected" data-pos="center" aria-label="Środek">●</button>
+                <button class="btn-position" data-pos="right" aria-label="Prawa strona">▶</button>
+              </div>
+            </div>
+
+            <div class="volume-row">
+              <span>🔊</span>
+              <input type="range" id="voiceVolume" min="0" max="100" value="100" aria-label="Głośność medytacji">
+              <span class="volume-value" id="voiceVolumeValue">100%</span>
+            </div>
+
+            <!-- Sync toggle -->
+            <div class="sync-toggle">
+              <span>Synchronizuj przestrzeń z końcem medytacji</span>
+              <div class="toggle-switch" id="syncToggle" role="switch" aria-checked="false" aria-label="Synchronizacja" tabindex="0"></div>
+            </div>
+
+            <!-- Legacy Loading (Hidden now, used for state) -->
+            <div id="voiceLoading" style="display: none;"></div>
+          </div>
         </div>
       </section>
 

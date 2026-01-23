@@ -185,7 +185,8 @@ const state = {
     volume: 1,
     hrtfEnabled: true,
     position: 'center',
-    syncWithSpace: false
+    syncWithSpace: false,
+    isLoading: false
   },
 
   // PRZESTRZEŃ TŁA
@@ -425,24 +426,23 @@ async function loadMeditationSession(sessionId) {
   
   showStatus(`Przygotowuję: ${session.name}...`);
   
-  const loading = document.getElementById('voiceLoading');
-  if (loading) loading.classList.add('visible');
-  
+  state.meditation.isLoading = true;
   state.meditation.selected = sessionId;
+  markStateChanged();
+
+  // Fake delay to show animation (optional, but realistic for network) or just load
   state.meditation.buffer = await loadAudioBuffer(session.file, session.fallback);
   
-  if (loading) loading.classList.remove('visible');
+  state.meditation.isLoading = false;
+  markStateChanged();
   
   if (state.meditation.buffer) {
     state.meditation.duration = state.meditation.buffer.duration;
     document.getElementById('totalTime').textContent = formatTime(state.meditation.duration);
-    document.getElementById('meditationTitle').textContent = session.name;
     showStatus(`${session.name} — gotowe`);
   } else {
     showStatus('Nie mogę załadować sesji', 3000);
   }
-  
-  markStateChanged();
 }
 
 function playMeditation() {
@@ -1037,12 +1037,14 @@ function renderMeditationList() {
   
   container.innerHTML = CONFIG.sessions.map(session => `
     <div class="item-card" data-id="${session.id}">
-      <div class="item-icon">${session.icon}</div>
-      <div class="item-info">
-        <div class="item-name">${session.name}</div>
-        <div class="item-desc">${session.duration} • ${session.description}</div>
+      <div class="item-card-header">
+        <div class="item-icon">${session.icon}</div>
+        <div class="item-info">
+          <div class="item-name">${session.name}</div>
+          <div class="item-desc">${session.duration} • ${session.description}</div>
+        </div>
+        <div class="item-status"></div>
       </div>
-      <div class="item-status"></div>
     </div>
   `).join('');
 }
@@ -1094,15 +1096,28 @@ function syncMeditationUI() {
     const isSelected = state.meditation.selected === id;
     const isPlaying = isSelected && state.meditation.isPlaying;
     
-    card.classList.toggle('selected', isSelected);
-    card.classList.toggle('playing', isPlaying);
+    // card.classList.toggle('selected', isSelected); // No longer needed as we expand
+    card.classList.toggle('expanded', isSelected); // Expansion style
+
+    // Status in header
+    const status = card.querySelector('.item-status');
+    if (status) {
+      status.style.opacity = isPlaying ? '1' : '0.3';
+      status.style.backgroundColor = isPlaying ? 'var(--cyan-glow)' : 'var(--text-secondary)';
+    }
   });
   
-  // Przycisk play
+  // Przycisk play - Loading state
   const btnPlay = document.getElementById('btnPlayMeditation');
   if (btnPlay) {
     btnPlay.classList.toggle('playing', state.meditation.isPlaying);
-    btnPlay.textContent = state.meditation.isPlaying ? '⏸' : '▶';
+    btnPlay.classList.toggle('loading', state.meditation.isLoading);
+
+    if (state.meditation.isLoading) {
+      btnPlay.textContent = ''; // Hide icon during loading
+    } else {
+      btnPlay.textContent = state.meditation.isPlaying ? '⏸' : '▶';
+    }
   }
   
   // HRTF toggle
@@ -1552,7 +1567,7 @@ function setupEventHandlers() {
   // === Meditation Controls ===
   document.getElementById('btnPlayMeditation')?.addEventListener('click', () => {
     if (!state.meditation.selected) {
-      showStatus('Wybierz najpierw sesję', 2000);
+      // This case should theoretically not happen with embedded player as user must select a card to see player
       return;
     }
     
@@ -1565,16 +1580,42 @@ function setupEventHandlers() {
   
   document.getElementById('btnStopMeditation')?.addEventListener('click', stopMeditation);
   
-  // Meditation list
+  // Meditation list CLICK (The Accordion Logic)
   document.getElementById('meditationList')?.addEventListener('click', async (e) => {
+    // Find clicked card header/container
     const card = e.target.closest('.item-card');
+    // If clicked on the controls inside the card, ignore the expand logic
+    if (e.target.closest('.embedded-player')) return;
+
     if (!card) return;
     
     const id = card.dataset.id;
-    if (id && id !== state.meditation.selected) {
-      stopMeditation();
-      await loadMeditationSession(id);
+
+    // Logic: If already active/expanded, maybe toggle? Or do nothing?
+    // User requirement: "Player shows up after pressing card".
+
+    if (state.meditation.selected === id) {
+      // If user clicks the header of the active card, maybe collapse?
+      // Or just ignore. Let's toggle for better UX.
+      // But if we toggle off, we should stop meditation? Or just hide controls?
+      // Let's keep it simple: If same, do nothing (keep expanded).
+      return;
     }
+
+    // Stop current meditation if switching
+    stopMeditation();
+
+    // Move player logic
+    const playerElement = document.getElementById('meditation-player');
+    const container = document.getElementById('hidden-player-container');
+
+    // If player is currently somewhere else, move it back to container temp or directly to new card
+    // First, append to new card
+    if (playerElement) {
+        card.appendChild(playerElement);
+    }
+
+    await loadMeditationSession(id);
   });
   
   // Voice volume
