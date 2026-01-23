@@ -1789,6 +1789,9 @@ function init() {
   // Synchronizacja UI
   syncAllUI();
   
+  // Wymuś widok menu na starcie (ukrywa górny pasek)
+  switchView('menu');
+
   console.log('🎧 Przestrzeń relaksu — Harmonic Layers — zainicjalizowana');
   console.log('📁 Ścieżki audio: assets/audio/{voice,scenes,objects,timer}/*.webm');
 }

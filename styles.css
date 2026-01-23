@@ -53,7 +53,7 @@
 }
 
 /* ========================================
-   RESET & BASE
+   RESET & BASE & UTILITIES
    ======================================== */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -76,6 +76,15 @@ body {
   font-family: var(--font-body);
   background: var(--deep-void);
   color: var(--text-primary);
+}
+
+/* Utilities - moved to top for priority */
+.hidden-layer {
+  display: none !important;
+}
+
+.visible {
+  display: block !important;
 }
 
 /* ========================================
@@ -1237,9 +1246,7 @@ input:focus-visible,
   animation: fadeIn 0.5s ease-out;
 }
 
-.main-menu-view.hidden-layer {
-  display: none !important;
-}
+/* Note: .hidden-layer moved to top */
 
 .menu-card {
   width: 100%;
@@ -1303,9 +1310,6 @@ input:focus-visible,
 .menu-card[data-target="space"] { --glow-color: rgba(99, 102, 241, 0.2); }
 .menu-card[data-target="sounds"] { --glow-color: rgba(52, 211, 153, 0.2); }
 
-.hidden-layer {
-  display: none !important;
-}
 
 /* ========================================
    RESPONSIVE
