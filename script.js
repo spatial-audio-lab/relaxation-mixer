@@ -160,7 +160,8 @@ const CONFIG = {
 
 const state = {
   _stateVersion: 0,
-  
+  currentView: 'menu', // 'menu', 'meditation', 'space', 'sounds'
+
   // Audio context
   audioContext: null,
   masterGain: null,
@@ -247,6 +248,38 @@ CONFIG.scenes.forEach(scene => {
 // ================================================================
 // === SEKCJA: UTILITY FUNCTIONS ===
 // ================================================================
+
+function switchView(viewName) {
+  state.currentView = viewName;
+
+  const topLayer = document.getElementById('top-ui-layer');
+  const mainMenu = document.getElementById('main-menu');
+  const mainContent = document.getElementById('mainContent');
+
+  if (viewName === 'menu') {
+    topLayer?.classList.add('hidden-layer');
+    mainContent?.classList.add('hidden-layer');
+    mainMenu?.classList.remove('hidden-layer');
+  } else {
+    topLayer?.classList.remove('hidden-layer');
+    mainContent?.classList.remove('hidden-layer');
+    mainMenu?.classList.add('hidden-layer');
+
+    // Switch Tab
+    document.querySelectorAll('.tab-panel').forEach(panel => {
+      panel.classList.remove('active');
+    });
+    const activePanel = document.getElementById(`tab-${viewName}`);
+    if (activePanel) activePanel.classList.add('active');
+
+    // Resize canvas if needed
+    if (viewName === 'sounds') {
+      setTimeout(resizeCanvas, 100);
+    }
+  }
+
+  syncStatusBar();
+}
 
 function generateInstanceId() {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -1131,32 +1164,38 @@ function syncStatusBar() {
   
   // Meditation
   if (meditationChip) {
-    const isActive = state.meditation.isPlaying && state.meditation.selected;
-    meditationChip.classList.toggle('active', isActive);
+    const isPlaying = state.meditation.isPlaying;
+    const isSelected = state.currentView === 'meditation';
+
+    meditationChip.classList.toggle('active', isSelected);
+    meditationChip.classList.toggle('playing', isPlaying);
     
     const textSpan = meditationChip.querySelector('span:last-child');
     if (textSpan) {
-      if (isActive) {
+      if (isPlaying && state.meditation.selected) {
         const session = CONFIG.sessions.find(s => s.id === state.meditation.selected);
-        textSpan.textContent = `▶ ${session?.name || 'Medytacja'}`;
+        textSpan.textContent = `▶ ${session?.name || 'Podróż'}`;
       } else {
-        textSpan.textContent = 'Wybierz sesję';
+        textSpan.textContent = 'Podróże';
       }
     }
   }
   
   // Space
   if (spaceChip) {
-    const isActive = state.space.active !== null;
-    spaceChip.classList.toggle('active', isActive);
+    const isPlaying = state.space.active !== null;
+    const isSelected = state.currentView === 'space';
+
+    spaceChip.classList.toggle('active', isSelected);
+    spaceChip.classList.toggle('playing', isPlaying);
     
     const textSpan = spaceChip.querySelector('span:last-child');
     if (textSpan) {
-      if (isActive) {
+      if (isPlaying) {
         const scene = CONFIG.scenes.find(s => s.id === state.space.active);
         textSpan.textContent = `${scene?.icon || ''} ${scene?.name || 'Przestrzeń'}`;
       } else {
-        textSpan.textContent = 'Przestrzeń tła';
+        textSpan.textContent = 'Przestrzenie';
       }
     }
   }
@@ -1164,28 +1203,19 @@ function syncStatusBar() {
   // Sounds
   if (soundsChip) {
     const enabledCount = Object.values(state.sounds.objects).filter(o => o.enabled).length;
-    soundsChip.classList.toggle('active', enabledCount > 0);
+    const isSelected = state.currentView === 'sounds';
+
+    soundsChip.classList.toggle('active', isSelected);
+    soundsChip.classList.toggle('playing', enabledCount > 0);
     
     const textSpan = soundsChip.querySelector('span:last-child');
     if (textSpan) {
       if (enabledCount > 0) {
-        textSpan.textContent = `×${enabledCount} dźwięk${enabledCount > 1 ? 'i' : ''}`;
+        textSpan.textContent = `×${enabledCount} aktywn${enabledCount === 1 ? 'y' : 'e'}`;
       } else {
-        textSpan.textContent = 'Dźwięki 3D';
+        textSpan.textContent = 'Dźwięki';
       }
     }
-  }
-  
-  // Nav dots
-  const meditationNav = document.querySelector('.nav-item[data-tab="meditation"]');
-  const spaceNav = document.querySelector('.nav-item[data-tab="space"]');
-  const soundsNav = document.querySelector('.nav-item[data-tab="sounds"]');
-  
-  if (meditationNav) meditationNav.classList.toggle('has-active', state.meditation.isPlaying);
-  if (spaceNav) spaceNav.classList.toggle('has-active', state.space.active !== null);
-  if (soundsNav) {
-    const enabledCount = Object.values(state.sounds.objects).filter(o => o.enabled).length;
-    soundsNav.classList.toggle('has-active', enabledCount > 0);
   }
 }
 
@@ -1481,23 +1511,21 @@ function setupEventHandlers() {
     document.getElementById('audioPrompt')?.classList.add('hidden');
   });
   
-  // === Tab Navigation ===
-  document.querySelectorAll('.nav-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const tab = item.dataset.tab;
-      
-      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-      item.classList.add('active');
-      
-      document.querySelectorAll('.tab-panel').forEach(panel => {
-        panel.classList.remove('active');
-        if (panel.id === `tab-${tab}`) {
-          panel.classList.add('active');
-          if (tab === 'sounds') {
-            setTimeout(resizeCanvas, 100);
-          }
-        }
-      });
+  // === Main Menu & Navigation ===
+
+  // Main Menu Cards
+  document.querySelectorAll('.menu-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const target = card.dataset.target;
+      switchView(target);
+    });
+  });
+
+  // Top Navigation (Status Chips)
+  document.querySelectorAll('.status-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const target = chip.dataset.layer; // reused 'data-layer' for id
+      switchView(target);
     });
   });
   

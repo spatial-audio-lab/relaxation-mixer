@@ -29,8 +29,8 @@
   --sounds-accent: var(--emerald-soft);
   
   /* Typography */
-  --font-display: 'Outfit', sans-serif;
-  --font-body: 'DM Sans', sans-serif;
+  --font-display: 'Lexend', sans-serif;
+  --font-body: 'Lexend', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   
   /* Spacing */
@@ -273,13 +273,15 @@ body {
 }
 
 /* ========================================
-   STATUS BAR
+   STATUS BAR (Main Navigation)
    ======================================== */
 .status-bar {
-  height: var(--status-height);
-  padding: 0 var(--space-md);
+  height: auto;
+  min-height: 80px;
+  padding: var(--space-sm) var(--space-md);
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-sm);
   background: rgba(10, 14, 20, 0.9);
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
@@ -293,42 +295,70 @@ body {
 }
 
 .status-chip {
+  flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 12px 8px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid transparent;
-  border-radius: 20px;
-  font-size: 0.75rem;
+  border: 2px solid transparent;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
   white-space: nowrap;
-  flex-shrink: 0;
   transition: all var(--transition-fast);
   cursor: pointer;
+  position: relative;
 }
 
+.status-chip span:last-child {
+  font-family: var(--font-display);
+}
+
+/* Indicator (Playing Light) */
 .status-chip .indicator {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--text-secondary);
+  opacity: 0.3;
   transition: all var(--transition-fast);
+  position: absolute;
+  top: 8px;
+  right: 8px;
 }
 
-.status-chip.active {
-  background: rgba(50, 184, 198, 0.1);
-  border-color: rgba(50, 184, 198, 0.3);
-}
-
-.status-chip.active .indicator {
-  background: var(--cyan-glow);
-  box-shadow: 0 0 8px var(--cyan-glow);
+/* Playing State (Light On) */
+.status-chip.playing .indicator {
+  opacity: 1;
   animation: pulse 2s ease-in-out infinite;
 }
 
-.status-chip.meditation.active { border-color: rgba(50, 184, 198, 0.4); }
-.status-chip.space.active { border-color: rgba(99, 102, 241, 0.4); }
-.status-chip.sounds.active { border-color: rgba(52, 211, 153, 0.4); }
+.status-chip.meditation.playing .indicator { background: var(--meditation-accent); box-shadow: 0 0 10px var(--meditation-accent); }
+.status-chip.space.playing .indicator { background: var(--space-accent); box-shadow: 0 0 10px var(--space-accent); }
+.status-chip.sounds.playing .indicator { background: var(--sounds-accent); box-shadow: 0 0 10px var(--sounds-accent); }
+
+/* Active State (Selected Tab) - Glowing Border */
+.status-chip.active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.status-chip.meditation.active {
+  border-color: var(--meditation-accent);
+  box-shadow: 0 0 15px rgba(50, 184, 198, 0.2), inset 0 0 10px rgba(50, 184, 198, 0.1);
+}
+
+.status-chip.space.active {
+  border-color: var(--space-accent);
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.2), inset 0 0 10px rgba(99, 102, 241, 0.1);
+}
+
+.status-chip.sounds.active {
+  border-color: var(--sounds-accent);
+  box-shadow: 0 0 15px rgba(52, 211, 153, 0.2), inset 0 0 10px rgba(52, 211, 153, 0.1);
+}
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
@@ -343,7 +373,7 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   padding: var(--space-md);
-  padding-bottom: calc(var(--nav-height) + var(--space-md) + var(--safe-area-bottom));
+  padding-bottom: calc(var(--space-md) + var(--safe-area-bottom));
 }
 
 /* Tab Panels */
@@ -906,102 +936,6 @@ body {
 }
 
 /* ========================================
-   BOTTOM NAVIGATION
-   ======================================== */
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 480px;
-  height: calc(var(--nav-height) + var(--safe-area-bottom));
-  padding-bottom: var(--safe-area-bottom);
-  background: rgba(18, 24, 32, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  z-index: 100;
-}
-
-@media (min-width: 768px) {
-  .bottom-nav {
-    max-width: 600px;
-  }
-}
-
-.nav-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: var(--space-sm) 0;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  position: relative;
-}
-
-.nav-item::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 3px;
-  border-radius: 0 0 3px 3px;
-  transition: all var(--transition-fast);
-}
-
-.nav-item[data-tab="meditation"]::before { background: var(--meditation-accent); }
-.nav-item[data-tab="space"]::before { background: var(--space-accent); }
-.nav-item[data-tab="sounds"]::before { background: var(--sounds-accent); }
-
-.nav-item.active::before { width: 40px; }
-
-.nav-icon {
-  font-size: 1.5rem;
-  transition: transform var(--transition-fast);
-}
-
-.nav-item.active .nav-icon { transform: scale(1.15); }
-
-.nav-label {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  transition: color var(--transition-fast);
-}
-
-.nav-item.active .nav-label { color: var(--text-primary); }
-.nav-item[data-tab="meditation"].active .nav-label { color: var(--meditation-accent); }
-.nav-item[data-tab="space"].active .nav-label { color: var(--space-accent); }
-.nav-item[data-tab="sounds"].active .nav-label { color: var(--sounds-accent); }
-
-.nav-dot {
-  position: absolute;
-  top: 8px;
-  right: calc(50% - 22px);
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-}
-
-.nav-item[data-tab="meditation"] .nav-dot { background: var(--meditation-accent); }
-.nav-item[data-tab="space"] .nav-dot { background: var(--space-accent); }
-.nav-item[data-tab="sounds"] .nav-dot { background: var(--sounds-accent); }
-
-.nav-item.has-active .nav-dot {
-  opacity: 1;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-/* ========================================
    TIMER PANEL (Overlay)
    ======================================== */
 .timer-panel {
@@ -1287,6 +1221,90 @@ input:focus-visible,
 .toggle-switch:focus-visible {
   outline: 2px solid var(--cyan-glow);
   outline-offset: 2px;
+}
+
+/* ========================================
+   MAIN MENU (Visual Silence)
+   ======================================== */
+.main-menu-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-xl);
+  padding: var(--space-lg);
+  animation: fadeIn 0.5s ease-out;
+}
+
+.main-menu-view.hidden-layer {
+  display: none !important;
+}
+
+.menu-card {
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 16/9;
+  background: rgba(18, 24, 32, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.menu-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  background: rgba(18, 24, 32, 0.8);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.menu-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, var(--glow-color, rgba(255,255,255,0.1)), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.menu-card:hover::before {
+  opacity: 1;
+}
+
+.menu-content {
+  text-align: center;
+  z-index: 1;
+}
+
+.menu-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-sm);
+  filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
+}
+
+.menu-label {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+}
+
+/* Specific colors for cards */
+.menu-card[data-target="meditation"] { --glow-color: rgba(50, 184, 198, 0.2); }
+.menu-card[data-target="space"] { --glow-color: rgba(99, 102, 241, 0.2); }
+.menu-card[data-target="sounds"] { --glow-color: rgba(52, 211, 153, 0.2); }
+
+.hidden-layer {
+  display: none !important;
 }
 
 /* ========================================

@@ -12,7 +12,7 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=JetBrains+Mono&family=Outfit:wght@300;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
   
   <!-- Styles -->
   <link rel="stylesheet" href="styles.css">
@@ -36,53 +36,78 @@
   <!-- App Shell -->
   <div class="app-shell">
     
-    <!-- HEADER z globalnymi kontrolkami -->
-    <header class="header">
-      <div class="logo">
-        <span class="logo-icon">🎧</span>
-        <span>Przestrzeń Relaksu</span>
-      </div>
-      <div class="header-controls">
-        <!-- Globalne Play/Pause/Stop -->
-        <div class="global-controls">
-          <button class="btn-global" id="btnStopAll" aria-label="Zatrzymaj wszystko" title="Zatrzymaj wszystko">■</button>
-          <button class="btn-global play-all" id="btnPlayPauseAll" aria-label="Play wszystko" title="Pauza/Play wszystko">▶</button>
+    <!-- TOP UI GROUP (Header + Nav) - Initially Hidden -->
+    <div id="top-ui-layer" class="hidden-layer">
+      <!-- HEADER z globalnymi kontrolkami -->
+      <header class="header">
+        <div class="logo">
+          <span class="logo-icon">🎧</span>
+          <span>Przestrzeń Relaksu</span>
         </div>
-        <!-- Master Volume -->
-        <div class="master-volume">
-          <span>🔊</span>
-          <input type="range" id="masterVolume" min="0" max="100" value="80" aria-label="Głośność główna">
+        <div class="header-controls">
+          <!-- Globalne Play/Pause/Stop -->
+          <div class="global-controls">
+            <button class="btn-global" id="btnStopAll" aria-label="Zatrzymaj wszystko" title="Zatrzymaj wszystko">■</button>
+            <button class="btn-global play-all" id="btnPlayPauseAll" aria-label="Play wszystko" title="Pauza/Play wszystko">▶</button>
+          </div>
+          <!-- Master Volume -->
+          <div class="master-volume">
+            <span>🔊</span>
+            <input type="range" id="masterVolume" min="0" max="100" value="80" aria-label="Głośność główna">
+          </div>
+          <!-- Timer -->
+          <button class="timer-mini" id="timerBtn" aria-label="Timer">--:--</button>
         </div>
-        <!-- Timer -->
-        <button class="timer-mini" id="timerBtn" aria-label="Timer">--:--</button>
-      </div>
-    </header>
+      </header>
 
-    <!-- STATUS BAR - aktywne warstwy -->
-    <div class="status-bar">
-      <div class="status-chip meditation" data-layer="meditation">
-        <span class="indicator"></span>
-        <span>Wybierz sesję</span>
+      <!-- STATUS BAR (Main Navigation) -->
+      <div class="status-bar" id="mainNavigation">
+        <div class="status-chip meditation" data-layer="meditation">
+          <span class="indicator"></span>
+          <span>Podróże</span>
+        </div>
+        <div class="status-chip space" data-layer="space">
+          <span class="indicator"></span>
+          <span>Przestrzenie</span>
+        </div>
+        <div class="status-chip sounds" data-layer="sounds">
+          <span class="indicator"></span>
+          <span>Dźwięki</span>
+        </div>
       </div>
-      <div class="status-chip space" data-layer="space">
-        <span class="indicator"></span>
-        <span>Przestrzeń tła</span>
+    </div>
+
+    <!-- MAIN MENU (Entry Screen) -->
+    <div id="main-menu" class="main-menu-view">
+      <div class="menu-card" data-target="meditation">
+        <div class="menu-content">
+           <div class="menu-icon">🧘</div>
+           <div class="menu-label">Podróże</div>
+        </div>
       </div>
-      <div class="status-chip sounds" data-layer="sounds">
-        <span class="indicator"></span>
-        <span>Dźwięki 3D</span>
+      <div class="menu-card" data-target="space">
+        <div class="menu-content">
+           <div class="menu-icon">🌲</div>
+           <div class="menu-label">Przestrzenie</div>
+        </div>
+      </div>
+      <div class="menu-card" data-target="sounds">
+        <div class="menu-content">
+           <div class="menu-icon">🔮</div>
+           <div class="menu-label">Dźwięki</div>
+        </div>
       </div>
     </div>
 
     <!-- MAIN CONTENT -->
-    <main class="main-content">
+    <main class="main-content hidden-layer" id="mainContent">
       
-      <!-- ==================== TAB: MEDYTACJE ==================== -->
-      <section class="tab-panel active" id="tab-meditation">
+      <!-- ==================== TAB: PODRÓŻE (ex Medytacje) ==================== -->
+      <section class="tab-panel" id="tab-meditation">
         <div class="section-header">
           <span class="section-icon">🧘</span>
           <div>
-            <div class="section-title">Medytacje</div>
+            <div class="section-title">Podróże</div>
             <div class="section-subtitle">Sesje prowadzone z dźwiękiem 3D</div>
           </div>
         </div>
@@ -143,12 +168,12 @@
         </div>
       </section>
 
-      <!-- ==================== TAB: PRZESTRZEŃ TŁA ==================== -->
+      <!-- ==================== TAB: PRZESTRZENIE (ex Przestrzeń tła) ==================== -->
       <section class="tab-panel" id="tab-space">
         <div class="section-header">
           <span class="section-icon">🌲</span>
           <div>
-            <div class="section-title">Przestrzeń tła</div>
+            <div class="section-title">Przestrzenie</div>
             <div class="section-subtitle">Ambientowe otoczenie dźwiękowe</div>
           </div>
         </div>
@@ -171,12 +196,12 @@
         </p>
       </section>
 
-      <!-- ==================== TAB: DŹWIĘKI 3D ==================== -->
+      <!-- ==================== TAB: DŹWIĘKI (ex Dźwięki 3D) ==================== -->
       <section class="tab-panel" id="tab-sounds">
         <div class="section-header">
           <span class="section-icon">🔮</span>
           <div>
-            <div class="section-title">Dźwięki 3D</div>
+            <div class="section-title">Dźwięki</div>
             <div class="section-subtitle">Przestrzenne obiekty dźwiękowe</div>
           </div>
         </div>
@@ -228,25 +253,6 @@
       </section>
 
     </main>
-
-    <!-- BOTTOM NAVIGATION -->
-    <nav class="bottom-nav">
-      <div class="nav-item active" data-tab="meditation">
-        <div class="nav-dot"></div>
-        <span class="nav-icon">🧘</span>
-        <span class="nav-label">Medytacje</span>
-      </div>
-      <div class="nav-item" data-tab="space">
-        <div class="nav-dot"></div>
-        <span class="nav-icon">🌲</span>
-        <span class="nav-label">Przestrzeń</span>
-      </div>
-      <div class="nav-item" data-tab="sounds">
-        <div class="nav-dot"></div>
-        <span class="nav-icon">🔮</span>
-        <span class="nav-label">Dźwięki 3D</span>
-      </div>
-    </nav>
 
     <!-- Timer Panel (overlay) -->
     <div class="timer-panel" id="timerPanel">
