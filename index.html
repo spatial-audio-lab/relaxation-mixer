@@ -1441,6 +1441,11 @@
     const state = {
       _stateVersion: 0,  // [NAPRAWA #5] Inkrementowany przy każdej zmianie stanu
       
+      // [OPTIMIZATION] Cache DOM references to avoid N+1 queries
+      uiCache: {
+        objects: {}
+      },
+
       audioContext: null,
       masterGain: null,
       lowShelfFilter: null,
@@ -2209,7 +2214,8 @@
     
     function syncObjectsUI() {
       CONFIG.objects.forEach(obj => {
-        const item = document.querySelector(`.object-item[data-object="${obj.id}"]`);
+        // [OPTIMIZATION] Use cached DOM element
+        const item = state.uiCache.objects[obj.id] || document.querySelector(`.object-item[data-object="${obj.id}"]`);
         if (!item) return;
         
         const objState = state.architect.objects[obj.id];
@@ -2437,6 +2443,11 @@
           updateObjectVolume(objectId, volume);
           updateRangeFill(input, fillEl);
         });
+      });
+
+      // [OPTIMIZATION] Populate DOM cache
+      CONFIG.objects.forEach(obj => {
+        state.uiCache.objects[obj.id] = container.querySelector(`.object-item[data-object="${obj.id}"]`);
       });
     }
 
