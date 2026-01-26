@@ -1,0 +1,10 @@
+127.0.0.1 - - [26/Jan/2026 04:03:58] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [26/Jan/2026 04:03:59] "GET /assets/audio/voice/body-scan.webm HTTP/1.1" 200 -
+127.0.0.1 - - [26/Jan/2026 04:04:00] code 404, message File not found
+127.0.0.1 - - [26/Jan/2026 04:04:00] "GET /assets/audio/timer/start.webm HTTP/1.1" 404 -
+127.0.0.1 - - [26/Jan/2026 04:04:00] code 404, message File not found
+127.0.0.1 - - [26/Jan/2026 04:04:00] "GET /assets/audio/timer/start.mp3 HTTP/1.1" 404 -
+127.0.0.1 - - [26/Jan/2026 04:04:00] code 404, message File not found
+127.0.0.1 - - [26/Jan/2026 04:04:00] "GET /assets/audio/timer/end.webm HTTP/1.1" 404 -
+127.0.0.1 - - [26/Jan/2026 04:04:00] code 404, message File not found
+127.0.0.1 - - [26/Jan/2026 04:04:00] "GET /assets/audio/timer/end.mp3 HTTP/1.1" 404 -

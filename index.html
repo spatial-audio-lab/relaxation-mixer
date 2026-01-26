@@ -1429,6 +1429,12 @@
     // ========================================
     // APPLICATION STATE
     // ========================================
+
+    /**
+     * [OPTIMIZATION] Preload Cache
+     * Stores promises of ArrayBuffers for assets being fetched in background.
+     */
+    const preloadCache = new Map();
     
     /**
      * [NAPRAWA #1 & #5] Rozszerzony model stanu
@@ -1514,6 +1520,24 @@
     // UTILITY FUNCTIONS
     // ========================================
     
+    function preloadAudio(url) {
+      if (!url || preloadCache.has(url)) return;
+
+      console.log(`[Audio] Preloading: ${url}`);
+      const promise = fetch(url)
+        .then(response => {
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return response.arrayBuffer();
+        })
+        .catch(err => {
+          console.warn(`[Audio] Preload failed for ${url}`, err);
+          preloadCache.delete(url);
+          throw err;
+        });
+
+      preloadCache.set(url, promise);
+    }
+
     /**
      * [NAPRAWA #1] Generowanie unikalnych identyfikatorów instancji
      * Używamy kombinacji timestamp + random dla unikatowości
@@ -1629,9 +1653,19 @@
      */
     async function loadAudioBuffer(url, fallbackUrl = null) {
       try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const arrayBuffer = await response.arrayBuffer();
+        let arrayBuffer;
+
+        // [OPTIMIZATION] Check preload cache
+        if (preloadCache.has(url)) {
+          console.log(`[Audio] Using preloaded buffer for: ${url}`);
+          arrayBuffer = await preloadCache.get(url);
+          preloadCache.delete(url); // Consume once to prevent neutered buffer reuse
+        } else {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          arrayBuffer = await response.arrayBuffer();
+        }
+
         return await state.audioContext.decodeAudioData(arrayBuffer);
       } catch (error) {
         console.warn(`Could not load audio: ${url}`, error.message);
@@ -2623,6 +2657,11 @@
       renderObjectsList();
       setupEventHandlers();
       
+      // [OPTIMIZATION] Preload critical assets
+      if (CONFIG.sessions.length > 0) {
+        preloadAudio(CONFIG.sessions[0].file);
+      }
+
       console.log('🎧 Przestrzeń relaksu — zainicjalizowana');
       console.log('📁 Ścieżki audio: assets/audio/{voice,scenes,objects,timer}/*.webm (z fallbackiem .mp3)');
       console.log('🔧 Naprawiono: Race conditions, async validation, WebM format, smooth panning, UI sync');
