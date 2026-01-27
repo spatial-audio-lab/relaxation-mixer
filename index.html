@@ -1443,7 +1443,8 @@
       
       // [OPTIMIZATION] Cache DOM references to avoid N+1 queries
       uiCache: {
-        objects: {}
+        objects: {},
+        scenes: {}
       },
 
       audioContext: null,
@@ -2202,10 +2203,13 @@
     }
     
     function syncSceneUI() {
-      document.querySelectorAll('.scene-item').forEach(item => {
-        const sceneId = item.dataset.scene;
-        const isSelected = sceneId === state.architect.scene.active;
-        const isExpanded = state.architect.scene.expanded[sceneId];
+      CONFIG.scenes.forEach(scene => {
+        // [OPTIMIZATION] Use cached DOM element
+        const item = state.uiCache.scenes[scene.id] || document.querySelector(`.scene-item[data-scene="${scene.id}"]`);
+        if (!item) return;
+
+        const isSelected = scene.id === state.architect.scene.active;
+        const isExpanded = state.architect.scene.expanded[scene.id];
         
         item.classList.toggle('selected', isSelected);
         item.classList.toggle('expanded', isExpanded);
@@ -2360,6 +2364,11 @@
           updateSceneVolume(sceneId, volume);
           updateRangeFill(input, fillEl);
         });
+      });
+
+      // [OPTIMIZATION] Populate DOM cache
+      CONFIG.scenes.forEach(scene => {
+        state.uiCache.scenes[scene.id] = container.querySelector(`.scene-item[data-scene="${scene.id}"]`);
       });
     }
 
