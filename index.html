@@ -1443,7 +1443,8 @@
       
       // [OPTIMIZATION] Cache DOM references to avoid N+1 queries
       uiCache: {
-        objects: {}
+        objects: {},
+        playback: null // Initialized in init()
       },
 
       audioContext: null,
@@ -1460,6 +1461,7 @@
         isPlaying: false,
         isPaused: false,
         pauseTime: 0,
+        lastTimeString: '', // [OPTIMIZATION] Avoid redundant text updates
         startTime: 0,
         duration: 0,
         volume: 1,
@@ -1719,6 +1721,11 @@
       state.meditation.isPlaying = true;
       state.meditation.isPaused = false;
       
+      // [OPTIMIZATION] Update UI state once
+      if (state.uiCache.playback?.progressFill) {
+        state.uiCache.playback.progressFill.classList.add('playing');
+      }
+
       state.meditation.source.onended = () => {
         if (state.meditation.isPlaying) {
           stopMeditation();
@@ -1747,6 +1754,11 @@
       state.meditation.isPlaying = false;
       state.meditation.isPaused = true;
       
+      // [OPTIMIZATION] Update UI state once
+      if (state.uiCache.playback?.progressFill) {
+        state.uiCache.playback.progressFill.classList.remove('playing');
+      }
+
       updatePlayButton(false);
       markStateChanged();
     }
@@ -1762,6 +1774,11 @@
       state.meditation.isPaused = false;
       state.meditation.pauseTime = 0;
       
+      // [OPTIMIZATION] Update UI state once
+      if (state.uiCache.playback?.progressFill) {
+        state.uiCache.playback.progressFill.classList.remove('playing');
+      }
+
       updatePlayButton(false);
       updateProgressBar(0);
       document.getElementById('currentTime').textContent = '00:00';
@@ -1775,7 +1792,14 @@
       const progress = Math.min(elapsed / state.meditation.duration, 1);
       
       updateProgressBar(progress);
-      document.getElementById('currentTime').textContent = formatTime(elapsed);
+
+      // [OPTIMIZATION] Avoid redundant DOM updates
+      const timeString = formatTime(elapsed);
+      if (timeString !== state.meditation.lastTimeString) {
+        state.meditation.lastTimeString = timeString;
+        const timeEl = state.uiCache.playback?.currentTime || document.getElementById('currentTime');
+        if (timeEl) timeEl.textContent = timeString;
+      }
       
       if (progress < 1) {
         requestAnimationFrame(updateProgress);
@@ -1783,13 +1807,12 @@
     }
 
     function updateProgressBar(progress) {
-      const fill = document.getElementById('progressFill');
+      // [OPTIMIZATION] Use cached DOM element
+      const fill = state.uiCache.playback?.progressFill || document.getElementById('progressFill');
+      if (!fill) return;
+
       fill.style.width = `${progress * 100}%`;
-      if (state.meditation.isPlaying) {
-        fill.classList.add('playing');
-      } else {
-        fill.classList.remove('playing');
-      }
+      // Class manipulation moved to play/pause handlers to avoid layout thrashing in loop
     }
 
     function updatePlayButton(isPlaying) {
@@ -2623,6 +2646,14 @@
       renderObjectsList();
       setupEventHandlers();
       
+      // [OPTIMIZATION] Initialize playback UI cache
+      state.uiCache.playback = {
+        currentTime: document.getElementById('currentTime'),
+        progressFill: document.getElementById('progressFill'),
+        totalTime: document.getElementById('totalTime'),
+        btnPlay: document.getElementById('btnPlay')
+      };
+
       console.log('🎧 Przestrzeń relaksu — zainicjalizowana');
       console.log('📁 Ścieżki audio: assets/audio/{voice,scenes,objects,timer}/*.webm (z fallbackiem .mp3)');
       console.log('🔧 Naprawiono: Race conditions, async validation, WebM format, smooth panning, UI sync');
