@@ -1443,7 +1443,9 @@
       
       // [OPTIMIZATION] Cache DOM references to avoid N+1 queries
       uiCache: {
-        objects: {}
+        objects: {},
+        scenes: {},
+        meditation: {}
       },
 
       audioContext: null,
@@ -1465,7 +1467,8 @@
         volume: 1,
         hrtfEnabled: true,
         position: 'center',
-        syncWithSpace: false
+        syncWithSpace: false,
+        lastTimeString: ''
       },
       
       // ARCHITEKT PRZESTRZENI
@@ -1730,6 +1733,9 @@
       };
       
       updatePlayButton(true);
+      if (state.uiCache.meditation.progressFill) {
+        state.uiCache.meditation.progressFill.classList.add('playing');
+      }
       requestAnimationFrame(updateProgress);
       markStateChanged();
     }
@@ -1748,6 +1754,9 @@
       state.meditation.isPaused = true;
       
       updatePlayButton(false);
+      if (state.uiCache.meditation.progressFill) {
+        state.uiCache.meditation.progressFill.classList.remove('playing');
+      }
       markStateChanged();
     }
 
@@ -1764,7 +1773,13 @@
       
       updatePlayButton(false);
       updateProgressBar(0);
-      document.getElementById('currentTime').textContent = '00:00';
+      if (state.uiCache.meditation.progressFill) {
+        state.uiCache.meditation.progressFill.classList.remove('playing');
+      }
+      if (state.uiCache.meditation.currentTime) {
+        state.uiCache.meditation.currentTime.textContent = '00:00';
+      }
+      state.meditation.lastTimeString = '00:00';
       markStateChanged();
     }
 
@@ -1775,7 +1790,13 @@
       const progress = Math.min(elapsed / state.meditation.duration, 1);
       
       updateProgressBar(progress);
-      document.getElementById('currentTime').textContent = formatTime(elapsed);
+
+      // [OPTIMIZATION] Avoid DOM update if text hasn't changed
+      const timeString = formatTime(elapsed);
+      if (timeString !== state.meditation.lastTimeString) {
+        state.uiCache.meditation.currentTime.textContent = timeString;
+        state.meditation.lastTimeString = timeString;
+      }
       
       if (progress < 1) {
         requestAnimationFrame(updateProgress);
@@ -1783,12 +1804,10 @@
     }
 
     function updateProgressBar(progress) {
-      const fill = document.getElementById('progressFill');
-      fill.style.width = `${progress * 100}%`;
-      if (state.meditation.isPlaying) {
-        fill.classList.add('playing');
-      } else {
-        fill.classList.remove('playing');
+      // [OPTIMIZATION] Use cached element and avoid style recalculation if possible
+      // Removed class toggling from animation loop
+      if (state.uiCache.meditation.progressFill) {
+        state.uiCache.meditation.progressFill.style.width = `${progress * 100}%`;
       }
     }
 
@@ -2202,7 +2221,8 @@
     }
     
     function syncSceneUI() {
-      document.querySelectorAll('.scene-item').forEach(item => {
+      // [OPTIMIZATION] Use cached DOM elements
+      Object.values(state.uiCache.scenes).forEach(item => {
         const sceneId = item.dataset.scene;
         const isSelected = sceneId === state.architect.scene.active;
         const isExpanded = state.architect.scene.expanded[sceneId];
@@ -2618,6 +2638,15 @@
         state.architect.scene.instanceIds[scene.id] = null;
       });
       
+      // [OPTIMIZATION] Populate meditation UI cache
+      state.uiCache.meditation = {
+        progressFill: document.getElementById('progressFill'),
+        currentTime: document.getElementById('currentTime'),
+        totalTime: document.getElementById('totalTime'),
+        btnPlay: document.getElementById('btnPlay'),
+        btnStop: document.getElementById('btnStop')
+      };
+
       renderSessionCards();
       renderSceneList();
       renderObjectsList();
