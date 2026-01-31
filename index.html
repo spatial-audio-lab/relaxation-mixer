@@ -1446,6 +1446,9 @@
         objects: {}
       },
 
+      // [OPTIMIZATION] Cache for preloaded ArrayBuffers
+      preloadCache: {},
+
       audioContext: null,
       masterGain: null,
       lowShelfFilter: null,
@@ -1622,16 +1625,66 @@
     // ========================================
     
     /**
+     * [OPTIMIZATION] Preload audio asset into memory cache (ArrayBuffer only)
+     * Does not decode, so it can be done before AudioContext is ready.
+     */
+    async function preloadAudio(url, fallbackUrl = null) {
+      if (state.preloadCache[url]) return;
+
+      try {
+        const response = await fetch(url);
+        if (response.ok) {
+          state.preloadCache[url] = await response.arrayBuffer();
+          // console.log(`[Preload] Cached: ${url}`);
+          return;
+        }
+      } catch (e) {
+        // console.warn(`[Preload] Failed primary: ${url}`, e);
+      }
+
+      // Try fallback if provided and primary failed
+      if (fallbackUrl) {
+        try {
+          const response = await fetch(fallbackUrl);
+          if (response.ok) {
+            state.preloadCache[fallbackUrl] = await response.arrayBuffer();
+            // console.log(`[Preload] Cached fallback: ${fallbackUrl}`);
+          }
+        } catch (e) {
+          // console.warn(`[Preload] Failed fallback: ${fallbackUrl}`, e);
+        }
+      }
+    }
+
+    /**
      * [NAPRAWA #3] Ładowanie z fallbackiem MP3 -> WebM
      * 
      * Próbujemy najpierw załadować WebM (bezszwowe pętle),
      * a jeśli nie jest dostępny, używamy MP3 jako fallback.
      */
     async function loadAudioBuffer(url, fallbackUrl = null) {
+      // [OPTIMIZATION] Check preload cache first
+      let arrayBuffer = state.preloadCache[url];
+      if (arrayBuffer) {
+        console.log(`[Performance] Using preloaded asset: ${url}`);
+        delete state.preloadCache[url]; // Free memory
+        return await state.audioContext.decodeAudioData(arrayBuffer);
+      }
+
+      // Check fallback in cache
+      if (fallbackUrl) {
+        arrayBuffer = state.preloadCache[fallbackUrl];
+        if (arrayBuffer) {
+          console.log(`[Performance] Using preloaded fallback: ${fallbackUrl}`);
+          delete state.preloadCache[fallbackUrl]; // Free memory
+          return await state.audioContext.decodeAudioData(arrayBuffer);
+        }
+      }
+
       try {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const arrayBuffer = await response.arrayBuffer();
+        arrayBuffer = await response.arrayBuffer();
         return await state.audioContext.decodeAudioData(arrayBuffer);
       } catch (error) {
         console.warn(`Could not load audio: ${url}`, error.message);
@@ -2626,6 +2679,16 @@
       console.log('🎧 Przestrzeń relaksu — zainicjalizowana');
       console.log('📁 Ścieżki audio: assets/audio/{voice,scenes,objects,timer}/*.webm (z fallbackiem .mp3)');
       console.log('🔧 Naprawiono: Race conditions, async validation, WebM format, smooth panning, UI sync');
+
+      // [OPTIMIZATION] Start preloading critical assets
+      const firstSession = CONFIG.sessions[0];
+      if (firstSession) {
+        preloadAudio(firstSession.file, firstSession.fallback);
+      }
+
+      // Preload timer sounds
+      preloadAudio('assets/audio/timer/start.webm', 'assets/audio/timer/start.mp3');
+      preloadAudio('assets/audio/timer/end.webm', 'assets/audio/timer/end.mp3');
     }
 
     document.addEventListener('DOMContentLoaded', init);
