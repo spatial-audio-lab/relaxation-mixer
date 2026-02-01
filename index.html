@@ -1775,7 +1775,16 @@
       const progress = Math.min(elapsed / state.meditation.duration, 1);
       
       updateProgressBar(progress);
-      document.getElementById('currentTime').textContent = formatTime(elapsed);
+
+      const timeString = formatTime(elapsed);
+      if (timeString !== state.meditation.lastTimeString) {
+        if (state.uiCache.meditation && state.uiCache.meditation.currentTime) {
+          state.uiCache.meditation.currentTime.textContent = timeString;
+        } else {
+          document.getElementById('currentTime').textContent = timeString;
+        }
+        state.meditation.lastTimeString = timeString;
+      }
       
       if (progress < 1) {
         requestAnimationFrame(updateProgress);
@@ -1783,7 +1792,12 @@
     }
 
     function updateProgressBar(progress) {
-      const fill = document.getElementById('progressFill');
+      const fill = (state.uiCache.meditation && state.uiCache.meditation.progressFill)
+        ? state.uiCache.meditation.progressFill
+        : document.getElementById('progressFill');
+
+      if (!fill) return;
+
       fill.style.width = `${progress * 100}%`;
       if (state.meditation.isPlaying) {
         fill.classList.add('playing');
@@ -2612,6 +2626,12 @@
     // INITIALIZATION
     // ========================================
     function init() {
+      state.uiCache = state.uiCache || {};
+      state.uiCache.meditation = {
+        currentTime: document.getElementById('currentTime'),
+        progressFill: document.getElementById('progressFill')
+      };
+
       CONFIG.scenes.forEach(scene => {
         state.architect.scene.volumes[scene.id] = 0.5;
         state.architect.scene.expanded[scene.id] = false;
