@@ -1443,8 +1443,11 @@
       
       // [OPTIMIZATION] Cache DOM references to avoid N+1 queries
       uiCache: {
-        objects: {}
+        objects: {},
+        meditation: {}
       },
+
+      lastTimeString: null,
 
       audioContext: null,
       masterGain: null,
@@ -1730,6 +1733,12 @@
       };
       
       updatePlayButton(true);
+
+      // [OPTIMIZATION] Use cached element for class manipulation
+      if (state.uiCache.meditation.progressFill) {
+        state.uiCache.meditation.progressFill.classList.add('playing');
+      }
+
       requestAnimationFrame(updateProgress);
       markStateChanged();
     }
@@ -1763,8 +1772,22 @@
       state.meditation.pauseTime = 0;
       
       updatePlayButton(false);
+
+      // [OPTIMIZATION] Remove class using cache
+      if (state.uiCache.meditation.progressFill) {
+        state.uiCache.meditation.progressFill.classList.remove('playing');
+      }
+
       updateProgressBar(0);
-      document.getElementById('currentTime').textContent = '00:00';
+
+      // [OPTIMIZATION] Use cached element
+      if (state.uiCache.meditation.currentTime) {
+        state.uiCache.meditation.currentTime.textContent = '00:00';
+      } else {
+        document.getElementById('currentTime').textContent = '00:00';
+      }
+      state.lastTimeString = '00:00';
+
       markStateChanged();
     }
 
@@ -1775,7 +1798,17 @@
       const progress = Math.min(elapsed / state.meditation.duration, 1);
       
       updateProgressBar(progress);
-      document.getElementById('currentTime').textContent = formatTime(elapsed);
+
+      // [OPTIMIZATION] Throttle text updates to avoid layout thrashing
+      const formattedTime = formatTime(elapsed);
+      if (formattedTime !== state.lastTimeString) {
+        if (state.uiCache.meditation.currentTime) {
+          state.uiCache.meditation.currentTime.textContent = formattedTime;
+        } else {
+          document.getElementById('currentTime').textContent = formattedTime;
+        }
+        state.lastTimeString = formattedTime;
+      }
       
       if (progress < 1) {
         requestAnimationFrame(updateProgress);
@@ -1783,13 +1816,12 @@
     }
 
     function updateProgressBar(progress) {
-      const fill = document.getElementById('progressFill');
+      // [OPTIMIZATION] Use cached element
+      const fill = state.uiCache.meditation.progressFill || document.getElementById('progressFill');
       fill.style.width = `${progress * 100}%`;
-      if (state.meditation.isPlaying) {
-        fill.classList.add('playing');
-      } else {
-        fill.classList.remove('playing');
-      }
+
+      // [OPTIMIZATION] Class manipulation moved to play/stop handlers
+      // to remove it from the hot loop
     }
 
     function updatePlayButton(isPlaying) {
@@ -2449,6 +2481,10 @@
       CONFIG.objects.forEach(obj => {
         state.uiCache.objects[obj.id] = container.querySelector(`.object-item[data-object="${obj.id}"]`);
       });
+
+      // [OPTIMIZATION] Cache meditation elements
+      state.uiCache.meditation.currentTime = document.getElementById('currentTime');
+      state.uiCache.meditation.progressFill = document.getElementById('progressFill');
     }
 
     function updateObjectUI(objectId) {
