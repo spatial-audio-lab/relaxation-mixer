@@ -1443,7 +1443,8 @@
       
       // [OPTIMIZATION] Cache DOM references to avoid N+1 queries
       uiCache: {
-        objects: {}
+        objects: {},
+        meditation: {}
       },
 
       audioContext: null,
@@ -1465,7 +1466,8 @@
         volume: 1,
         hrtfEnabled: true,
         position: 'center',
-        syncWithSpace: false
+        syncWithSpace: false,
+        lastTimeString: ''
       },
       
       // ARCHITEKT PRZESTRZENI
@@ -1718,6 +1720,11 @@
       state.meditation.startTime = state.audioContext.currentTime - offset;
       state.meditation.isPlaying = true;
       state.meditation.isPaused = false;
+
+      // [OPTIMIZATION] Update visual state once, not every frame
+      if (state.uiCache.meditation.progressFill) {
+        state.uiCache.meditation.progressFill.classList.add('playing');
+      }
       
       state.meditation.source.onended = () => {
         if (state.meditation.isPlaying) {
@@ -1746,6 +1753,11 @@
       
       state.meditation.isPlaying = false;
       state.meditation.isPaused = true;
+
+      // [OPTIMIZATION] Update visual state
+      if (state.uiCache.meditation.progressFill) {
+        state.uiCache.meditation.progressFill.classList.remove('playing');
+      }
       
       updatePlayButton(false);
       markStateChanged();
@@ -1761,6 +1773,11 @@
       state.meditation.isPlaying = false;
       state.meditation.isPaused = false;
       state.meditation.pauseTime = 0;
+
+      // [OPTIMIZATION] Update visual state
+      if (state.uiCache.meditation.progressFill) {
+        state.uiCache.meditation.progressFill.classList.remove('playing');
+      }
       
       updatePlayButton(false);
       updateProgressBar(0);
@@ -1775,7 +1792,14 @@
       const progress = Math.min(elapsed / state.meditation.duration, 1);
       
       updateProgressBar(progress);
-      document.getElementById('currentTime').textContent = formatTime(elapsed);
+
+      // [OPTIMIZATION] Only update DOM when string changes (1/sec instead of 60/sec)
+      const timeString = formatTime(elapsed);
+      if (timeString !== state.meditation.lastTimeString) {
+        const timeDisplay = state.uiCache.meditation.currentTime || document.getElementById('currentTime');
+        if (timeDisplay) timeDisplay.textContent = timeString;
+        state.meditation.lastTimeString = timeString;
+      }
       
       if (progress < 1) {
         requestAnimationFrame(updateProgress);
@@ -1783,13 +1807,8 @@
     }
 
     function updateProgressBar(progress) {
-      const fill = document.getElementById('progressFill');
+      const fill = state.uiCache.meditation.progressFill || document.getElementById('progressFill');
       fill.style.width = `${progress * 100}%`;
-      if (state.meditation.isPlaying) {
-        fill.classList.add('playing');
-      } else {
-        fill.classList.remove('playing');
-      }
     }
 
     function updatePlayButton(isPlaying) {
@@ -2622,6 +2641,10 @@
       renderSceneList();
       renderObjectsList();
       setupEventHandlers();
+
+      // [OPTIMIZATION] Populate meditation UI cache
+      state.uiCache.meditation.progressFill = document.getElementById('progressFill');
+      state.uiCache.meditation.currentTime = document.getElementById('currentTime');
       
       console.log('🎧 Przestrzeń relaksu — zainicjalizowana');
       console.log('📁 Ścieżki audio: assets/audio/{voice,scenes,objects,timer}/*.webm (z fallbackiem .mp3)');
