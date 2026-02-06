@@ -1443,7 +1443,12 @@
       
       // [OPTIMIZATION] Cache DOM references to avoid N+1 queries
       uiCache: {
-        objects: {}
+        objects: {},
+        meditation: {
+          currentTime: null,
+          progressFill: null,
+          lastTimeString: null
+        }
       },
 
       audioContext: null,
@@ -1775,7 +1780,15 @@
       const progress = Math.min(elapsed / state.meditation.duration, 1);
       
       updateProgressBar(progress);
-      document.getElementById('currentTime').textContent = formatTime(elapsed);
+
+      // [OPTIMIZATION] Use cache and avoid redundant text updates
+      const timeString = formatTime(elapsed);
+      if (timeString !== state.uiCache.meditation.lastTimeString) {
+        if (state.uiCache.meditation.currentTime) {
+          state.uiCache.meditation.currentTime.textContent = timeString;
+        }
+        state.uiCache.meditation.lastTimeString = timeString;
+      }
       
       if (progress < 1) {
         requestAnimationFrame(updateProgress);
@@ -1783,12 +1796,10 @@
     }
 
     function updateProgressBar(progress) {
-      const fill = document.getElementById('progressFill');
-      fill.style.width = `${progress * 100}%`;
-      if (state.meditation.isPlaying) {
-        fill.classList.add('playing');
-      } else {
-        fill.classList.remove('playing');
+      // [OPTIMIZATION] Use cached element and remove class toggling from loop
+      const fill = state.uiCache.meditation.progressFill;
+      if (fill) {
+        fill.style.width = `${progress * 100}%`;
       }
     }
 
@@ -1797,6 +1808,12 @@
       btn.textContent = isPlaying ? '‖' : '▶';
       btn.setAttribute('aria-label', isPlaying ? 'Pauza' : 'Odtwórz');
       btn.classList.toggle('playing', isPlaying);
+
+      // [OPTIMIZATION] Toggle animation class here instead of in animation loop
+      const fill = state.uiCache.meditation.progressFill || document.getElementById('progressFill');
+      if (fill) {
+        fill.classList.toggle('playing', isPlaying);
+      }
     }
 
     /**
@@ -2618,6 +2635,10 @@
         state.architect.scene.instanceIds[scene.id] = null;
       });
       
+      // [OPTIMIZATION] Populate meditation UI cache
+      state.uiCache.meditation.currentTime = document.getElementById('currentTime');
+      state.uiCache.meditation.progressFill = document.getElementById('progressFill');
+
       renderSessionCards();
       renderSceneList();
       renderObjectsList();
