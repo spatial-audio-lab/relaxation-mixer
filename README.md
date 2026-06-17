@@ -2,10 +2,10 @@
 
 **Binauralny mikser relaksacyjny z przestrzennym audio 3D**
 
-Immersyjna aplikacja webowa łącząca prowadzone medytacje z binauralnymi krajobrazami dźwiękowymi i przestrzennie pozycjonowanymi obiektami audio. Zaprojektowana w estetyce *Ambient Morphism* — płynnych gradientów, glassmorphizmu i organicznych animacji.
+Immersyjna aplikacja webowa łącząca prowadzone medytacje z binauralnymi krajobrazami dźwiękowymi i przestrzennie pozycjonowanymi obiektami audio. 
+Zaprojektowana w estetyce *Ambient Morphism* — płynnych gradientów, glassmorphizmu i organicznych animacji.
 
-![Przestrzeń Relaksu Preview](preview.png)
-
+https://sanefungus.github.io/relaxation-mixer/
 ---
 
 ## ✨ Funkcjonalności
