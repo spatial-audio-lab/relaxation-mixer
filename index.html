@@ -1443,7 +1443,14 @@
       
       // [OPTIMIZATION] Cache DOM references to avoid N+1 queries
       uiCache: {
-        objects: {}
+        objects: {},
+        meditation: {
+          currentTime: null,
+          totalTime: null,
+          progressBar: null,
+          progressFill: null,
+          btnPlay: null
+        }
       },
 
       audioContext: null,
@@ -1465,7 +1472,8 @@
         volume: 1,
         hrtfEnabled: true,
         position: 'center',
-        syncWithSpace: false
+        syncWithSpace: false,
+        lastTimeString: ''
       },
       
       // ARCHITEKT PRZESTRZENI
@@ -1665,12 +1673,18 @@
       if (buffer) {
         state.meditation.buffer = buffer;
         state.meditation.duration = buffer.duration;
-        document.getElementById('totalTime').textContent = formatTime(buffer.duration);
+
+        const totalTimeEl = state.uiCache.meditation.totalTime || document.getElementById('totalTime');
+        if (totalTimeEl) totalTimeEl.textContent = formatTime(buffer.duration);
+
         showStatus(`${session.name} — gotowe`);
       } else {
         state.meditation.buffer = null;
         state.meditation.duration = 0;
-        document.getElementById('totalTime').textContent = '--:--';
+
+        const totalTimeEl = state.uiCache.meditation.totalTime || document.getElementById('totalTime');
+        if (totalTimeEl) totalTimeEl.textContent = '--:--';
+
         showStatus(`Nie mogę odnaleźć: ${session.name}`, 3000);
       }
       
@@ -1764,7 +1778,11 @@
       
       updatePlayButton(false);
       updateProgressBar(0);
-      document.getElementById('currentTime').textContent = '00:00';
+
+      const currentTimeEl = state.uiCache.meditation.currentTime || document.getElementById('currentTime');
+      if (currentTimeEl) currentTimeEl.textContent = '00:00';
+      state.meditation.lastTimeString = '00:00';
+
       markStateChanged();
     }
 
@@ -1775,7 +1793,14 @@
       const progress = Math.min(elapsed / state.meditation.duration, 1);
       
       updateProgressBar(progress);
-      document.getElementById('currentTime').textContent = formatTime(elapsed);
+
+      // [OPTIMIZATION] Prevent redundant text updates
+      const timeString = formatTime(elapsed);
+      if (state.meditation.lastTimeString !== timeString) {
+        const currentTimeEl = state.uiCache.meditation.currentTime || document.getElementById('currentTime');
+        if (currentTimeEl) currentTimeEl.textContent = timeString;
+        state.meditation.lastTimeString = timeString;
+      }
       
       if (progress < 1) {
         requestAnimationFrame(updateProgress);
@@ -1783,7 +1808,10 @@
     }
 
     function updateProgressBar(progress) {
-      const fill = document.getElementById('progressFill');
+      // [OPTIMIZATION] Use cached element
+      const fill = state.uiCache.meditation.progressFill || document.getElementById('progressFill');
+      if (!fill) return;
+
       fill.style.width = `${progress * 100}%`;
       if (state.meditation.isPlaying) {
         fill.classList.add('playing');
@@ -1793,7 +1821,9 @@
     }
 
     function updatePlayButton(isPlaying) {
-      const btn = document.getElementById('btnPlay');
+      const btn = state.uiCache.meditation.btnPlay || document.getElementById('btnPlay');
+      if (!btn) return;
+
       btn.textContent = isPlaying ? '‖' : '▶';
       btn.setAttribute('aria-label', isPlaying ? 'Pauza' : 'Odtwórz');
       btn.classList.toggle('playing', isPlaying);
@@ -2567,7 +2597,11 @@
         state.meditation.isPaused = true;
         
         updateProgressBar(progress);
-        document.getElementById('currentTime').textContent = formatTime(seekTime);
+
+        const timeString = formatTime(seekTime);
+        const currentTimeEl = state.uiCache.meditation.currentTime || document.getElementById('currentTime');
+        if (currentTimeEl) currentTimeEl.textContent = timeString;
+        state.meditation.lastTimeString = timeString;
         
         if (wasPlaying) {
           playMeditation();
@@ -2621,6 +2655,14 @@
       renderSessionCards();
       renderSceneList();
       renderObjectsList();
+
+      // [OPTIMIZATION] Populate meditation DOM cache
+      state.uiCache.meditation.currentTime = document.getElementById('currentTime');
+      state.uiCache.meditation.totalTime = document.getElementById('totalTime');
+      state.uiCache.meditation.progressBar = document.getElementById('progressBar');
+      state.uiCache.meditation.progressFill = document.getElementById('progressFill');
+      state.uiCache.meditation.btnPlay = document.getElementById('btnPlay');
+
       setupEventHandlers();
       
       console.log('🎧 Przestrzeń relaksu — zainicjalizowana');
