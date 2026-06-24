@@ -1443,7 +1443,9 @@
       
       // [OPTIMIZATION] Cache DOM references to avoid N+1 queries
       uiCache: {
-        objects: {}
+        objects: {},
+        scenes: {},
+        elements: {}
       },
 
       audioContext: null,
@@ -1513,6 +1515,26 @@
     // ========================================
     // UTILITY FUNCTIONS
     // ========================================
+
+    /**
+     * [OPTIMIZATION] Cache references to static DOM elements
+     * Reduces redundant getElementById calls in animation loops
+     */
+    function cacheStaticElements() {
+      state.uiCache.elements = {
+        currentTime: document.getElementById('currentTime'),
+        totalTime: document.getElementById('totalTime'),
+        progressFill: document.getElementById('progressFill'),
+        btnPlay: document.getElementById('btnPlay'),
+        voiceVolumeValue: document.getElementById('voiceVolumeValue'),
+        voicePositionButtons: document.getElementById('voicePosition')?.querySelectorAll('.btn-position'),
+        hrtfToggle: document.getElementById('hrtfToggle'),
+        syncToggle: document.getElementById('syncToggle'),
+        timerDisplay: document.getElementById('timerDisplay'),
+        btnTimerStart: document.getElementById('btnTimerStart'),
+        btnTimerStop: document.getElementById('btnTimerStop')
+      };
+    }
     
     /**
      * [NAPRAWA #1] Generowanie unikalnych identyfikatorów instancji
@@ -1665,12 +1687,16 @@
       if (buffer) {
         state.meditation.buffer = buffer;
         state.meditation.duration = buffer.duration;
-        document.getElementById('totalTime').textContent = formatTime(buffer.duration);
+        if (state.uiCache.elements.totalTime) {
+          state.uiCache.elements.totalTime.textContent = formatTime(buffer.duration);
+        }
         showStatus(`${session.name} — gotowe`);
       } else {
         state.meditation.buffer = null;
         state.meditation.duration = 0;
-        document.getElementById('totalTime').textContent = '--:--';
+        if (state.uiCache.elements.totalTime) {
+          state.uiCache.elements.totalTime.textContent = '--:--';
+        }
         showStatus(`Nie mogę odnaleźć: ${session.name}`, 3000);
       }
       
@@ -1764,7 +1790,9 @@
       
       updatePlayButton(false);
       updateProgressBar(0);
-      document.getElementById('currentTime').textContent = '00:00';
+      if (state.uiCache.elements.currentTime) {
+        state.uiCache.elements.currentTime.textContent = '00:00';
+      }
       markStateChanged();
     }
 
@@ -1775,7 +1803,9 @@
       const progress = Math.min(elapsed / state.meditation.duration, 1);
       
       updateProgressBar(progress);
-      document.getElementById('currentTime').textContent = formatTime(elapsed);
+      if (state.uiCache.elements.currentTime) {
+        state.uiCache.elements.currentTime.textContent = formatTime(elapsed);
+      }
       
       if (progress < 1) {
         requestAnimationFrame(updateProgress);
@@ -1783,7 +1813,9 @@
     }
 
     function updateProgressBar(progress) {
-      const fill = document.getElementById('progressFill');
+      const fill = state.uiCache.elements.progressFill;
+      if (!fill) return;
+
       fill.style.width = `${progress * 100}%`;
       if (state.meditation.isPlaying) {
         fill.classList.add('playing');
@@ -1793,7 +1825,9 @@
     }
 
     function updatePlayButton(isPlaying) {
-      const btn = document.getElementById('btnPlay');
+      const btn = state.uiCache.elements.btnPlay;
+      if (!btn) return;
+
       btn.textContent = isPlaying ? '‖' : '▶';
       btn.setAttribute('aria-label', isPlaying ? 'Pauza' : 'Odtwórz');
       btn.classList.toggle('playing', isPlaying);
@@ -2202,10 +2236,13 @@
     }
     
     function syncSceneUI() {
-      document.querySelectorAll('.scene-item').forEach(item => {
-        const sceneId = item.dataset.scene;
-        const isSelected = sceneId === state.architect.scene.active;
-        const isExpanded = state.architect.scene.expanded[sceneId];
+      // [OPTIMIZATION] Use cached scene DOM elements
+      CONFIG.scenes.forEach(scene => {
+        const item = state.uiCache.scenes[scene.id];
+        if (!item) return;
+
+        const isSelected = scene.id === state.architect.scene.active;
+        const isExpanded = state.architect.scene.expanded[scene.id];
         
         item.classList.toggle('selected', isSelected);
         item.classList.toggle('expanded', isExpanded);
@@ -2239,23 +2276,23 @@
     }
     
     function syncMeditationUI() {
-      // Synchronizacja przycisków pozycji
-      document.getElementById('voicePosition')?.querySelectorAll('.btn-position').forEach(btn => {
-        btn.classList.toggle('selected', btn.dataset.pos === state.meditation.position);
-      });
-      
-      // Synchronizacja toggle HRTF
-      const hrtfToggle = document.getElementById('hrtfToggle');
-      if (hrtfToggle) {
-        hrtfToggle.classList.toggle('active', state.meditation.hrtfEnabled);
-        hrtfToggle.setAttribute('aria-checked', state.meditation.hrtfEnabled);
+      // Synchronizacja przycisków pozycji (from cache)
+      if (state.uiCache.elements.voicePositionButtons) {
+        state.uiCache.elements.voicePositionButtons.forEach(btn => {
+          btn.classList.toggle('selected', btn.dataset.pos === state.meditation.position);
+        });
       }
       
-      // Synchronizacja toggle sync
-      const syncToggle = document.getElementById('syncToggle');
-      if (syncToggle) {
-        syncToggle.classList.toggle('active', state.meditation.syncWithSpace);
-        syncToggle.setAttribute('aria-checked', state.meditation.syncWithSpace);
+      // Synchronizacja toggle HRTF (from cache)
+      if (state.uiCache.elements.hrtfToggle) {
+        state.uiCache.elements.hrtfToggle.classList.toggle('active', state.meditation.hrtfEnabled);
+        state.uiCache.elements.hrtfToggle.setAttribute('aria-checked', state.meditation.hrtfEnabled);
+      }
+      
+      // Synchronizacja toggle sync (from cache)
+      if (state.uiCache.elements.syncToggle) {
+        state.uiCache.elements.syncToggle.classList.toggle('active', state.meditation.syncWithSpace);
+        state.uiCache.elements.syncToggle.setAttribute('aria-checked', state.meditation.syncWithSpace);
       }
     }
 
@@ -2360,6 +2397,11 @@
           updateSceneVolume(sceneId, volume);
           updateRangeFill(input, fillEl);
         });
+      });
+
+      // [OPTIMIZATION] Populate DOM cache for scenes
+      CONFIG.scenes.forEach(scene => {
+        state.uiCache.scenes[scene.id] = container.querySelector(`.scene-item[data-scene="${scene.id}"]`);
       });
     }
 
@@ -2622,6 +2664,7 @@
       renderSceneList();
       renderObjectsList();
       setupEventHandlers();
+      cacheStaticElements();
       
       console.log('🎧 Przestrzeń relaksu — zainicjalizowana');
       console.log('📁 Ścieżki audio: assets/audio/{voice,scenes,objects,timer}/*.webm (z fallbackiem .mp3)');
