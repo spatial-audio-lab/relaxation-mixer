@@ -1,0 +1,58 @@
+127.0.0.1 - - [27/Jan/2026 03:41:20] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [27/Jan/2026 03:41:22] code 404, message File not found
+127.0.0.1 - - [27/Jan/2026 03:41:22] "GET /assets/audio/timer/start.webm HTTP/1.1" 404 -
+127.0.0.1 - - [27/Jan/2026 03:41:22] "GET /assets/audio/voice/body-scan.webm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Jan/2026 03:41:22] code 404, message File not found
+127.0.0.1 - - [27/Jan/2026 03:41:22] "GET /assets/audio/timer/start.mp3 HTTP/1.1" 404 -
+127.0.0.1 - - [27/Jan/2026 03:41:22] code 404, message File not found
+127.0.0.1 - - [27/Jan/2026 03:41:22] "GET /assets/audio/timer/end.webm HTTP/1.1" 404 -
+127.0.0.1 - - [27/Jan/2026 03:41:22] code 404, message File not found
+127.0.0.1 - - [27/Jan/2026 03:41:22] "GET /assets/audio/timer/end.mp3 HTTP/1.1" 404 -
+127.0.0.1 - - [27/Jan/2026 03:41:24] "GET /assets/audio/scenes/mountain-meadow.webm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Jan/2026 03:41:59] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [27/Jan/2026 03:42:00] code 404, message File not found
+127.0.0.1 - - [27/Jan/2026 03:42:00] "GET /assets/audio/timer/start.webm HTTP/1.1" 404 -
+127.0.0.1 - - [27/Jan/2026 03:42:00] "GET /assets/audio/voice/body-scan.webm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Jan/2026 03:42:00] code 404, message File not found
+127.0.0.1 - - [27/Jan/2026 03:42:00] "GET /assets/audio/timer/start.mp3 HTTP/1.1" 404 -
+127.0.0.1 - - [27/Jan/2026 03:42:00] code 404, message File not found
+127.0.0.1 - - [27/Jan/2026 03:42:00] "GET /assets/audio/timer/end.webm HTTP/1.1" 404 -
+127.0.0.1 - - [27/Jan/2026 03:42:00] code 404, message File not found
+127.0.0.1 - - [27/Jan/2026 03:42:00] "GET /assets/audio/timer/end.mp3 HTTP/1.1" 404 -
+127.0.0.1 - - [27/Jan/2026 03:42:03] "GET /assets/audio/scenes/mountain-meadow.webm HTTP/1.1" 200 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 34210)
+Traceback (most recent call last):
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/http/server.py", line 1311, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/socketserver.py", line 766, in __init__
+    self.handle()
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/http/server.py", line 436, in handle
+    self.handle_one_request()
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/http/server.py", line 424, in handle_one_request
+    method()
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/http/server.py", line 878, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/shutil.py", line 204, in copyfileobj
+    fdst_write(buf)
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/socketserver.py", line 845, in write
+    self._sock.sendall(b)
+ConnectionResetError: [Errno 104] Connection reset by peer
+----------------------------------------
+127.0.0.1 - - [27/Jan/2026 03:42:52] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [27/Jan/2026 03:42:52] code 404, message File not found
+127.0.0.1 - - [27/Jan/2026 03:42:52] "GET /assets/audio/timer/start.webm HTTP/1.1" 404 -
+127.0.0.1 - - [27/Jan/2026 03:42:52] "GET /assets/audio/voice/body-scan.webm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Jan/2026 03:42:52] code 404, message File not found
+127.0.0.1 - - [27/Jan/2026 03:42:52] "GET /assets/audio/timer/start.mp3 HTTP/1.1" 404 -
+127.0.0.1 - - [27/Jan/2026 03:42:52] code 404, message File not found
+127.0.0.1 - - [27/Jan/2026 03:42:52] "GET /assets/audio/timer/end.webm HTTP/1.1" 404 -
+127.0.0.1 - - [27/Jan/2026 03:42:52] code 404, message File not found
+127.0.0.1 - - [27/Jan/2026 03:42:52] "GET /assets/audio/timer/end.mp3 HTTP/1.1" 404 -
+127.0.0.1 - - [27/Jan/2026 03:42:55] "GET /assets/audio/scenes/mountain-meadow.webm HTTP/1.1" 200 -
