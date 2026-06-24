@@ -1511,6 +1511,31 @@
     });
 
     // ========================================
+    // [OPTIMIZATION] PRELOAD CACHE
+    // ========================================
+    const preloadCache = new Map();
+
+    function preloadResource(url) {
+      if (!url || preloadCache.has(url)) return;
+      // console.log(`⚡ Preloading: ${url}`);
+      const promise = fetch(url)
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.arrayBuffer();
+        })
+        .catch(err => {
+          console.warn(`Preload failed: ${url}`, err);
+          return null;
+        });
+      preloadCache.set(url, promise);
+    }
+
+    // Trigger preloads for critical assets immediately
+    if (CONFIG.sessions.length > 0) {
+      preloadResource(CONFIG.sessions[0].file);
+    }
+
+    // ========================================
     // UTILITY FUNCTIONS
     // ========================================
     
@@ -1629,9 +1654,23 @@
      */
     async function loadAudioBuffer(url, fallbackUrl = null) {
       try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const arrayBuffer = await response.arrayBuffer();
+        let arrayBuffer;
+
+        // [OPTIMIZATION] Check preload cache first
+        if (preloadCache.has(url)) {
+          console.log(`⚡ Using preloaded resource: ${url}`);
+          arrayBuffer = await preloadCache.get(url);
+          // Clean up cache to allow GC, as decodeAudioData detaches buffer anyway
+          preloadCache.delete(url);
+        }
+
+        // If not cached or cache failed (null), fetch fresh
+        if (!arrayBuffer) {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          arrayBuffer = await response.arrayBuffer();
+        }
+
         return await state.audioContext.decodeAudioData(arrayBuffer);
       } catch (error) {
         console.warn(`Could not load audio: ${url}`, error.message);
