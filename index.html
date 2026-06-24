@@ -1443,7 +1443,9 @@
       
       // [OPTIMIZATION] Cache DOM references to avoid N+1 queries
       uiCache: {
-        objects: {}
+        objects: {},
+        progressFill: null,
+        currentTime: null
       },
 
       audioContext: null,
@@ -1465,7 +1467,8 @@
         volume: 1,
         hrtfEnabled: true,
         position: 'center',
-        syncWithSpace: false
+        syncWithSpace: false,
+        lastTimeString: ''
       },
       
       // ARCHITEKT PRZESTRZENI
@@ -1718,6 +1721,7 @@
       state.meditation.startTime = state.audioContext.currentTime - offset;
       state.meditation.isPlaying = true;
       state.meditation.isPaused = false;
+      state.uiCache.progressFill.classList.add('playing');
       
       state.meditation.source.onended = () => {
         if (state.meditation.isPlaying) {
@@ -1746,6 +1750,7 @@
       
       state.meditation.isPlaying = false;
       state.meditation.isPaused = true;
+      state.uiCache.progressFill.classList.remove('playing');
       
       updatePlayButton(false);
       markStateChanged();
@@ -1761,6 +1766,7 @@
       state.meditation.isPlaying = false;
       state.meditation.isPaused = false;
       state.meditation.pauseTime = 0;
+      state.uiCache.progressFill.classList.remove('playing');
       
       updatePlayButton(false);
       updateProgressBar(0);
@@ -1775,7 +1781,12 @@
       const progress = Math.min(elapsed / state.meditation.duration, 1);
       
       updateProgressBar(progress);
-      document.getElementById('currentTime').textContent = formatTime(elapsed);
+
+      const timeString = formatTime(elapsed);
+      if (timeString !== state.meditation.lastTimeString) {
+        state.uiCache.currentTime.textContent = timeString;
+        state.meditation.lastTimeString = timeString;
+      }
       
       if (progress < 1) {
         requestAnimationFrame(updateProgress);
@@ -1783,13 +1794,7 @@
     }
 
     function updateProgressBar(progress) {
-      const fill = document.getElementById('progressFill');
-      fill.style.width = `${progress * 100}%`;
-      if (state.meditation.isPlaying) {
-        fill.classList.add('playing');
-      } else {
-        fill.classList.remove('playing');
-      }
+      state.uiCache.progressFill.style.width = `${progress * 100}%`;
     }
 
     function updatePlayButton(isPlaying) {
@@ -2612,6 +2617,10 @@
     // INITIALIZATION
     // ========================================
     function init() {
+      // [OPTIMIZATION] Cache high-frequency DOM elements
+      state.uiCache.progressFill = document.getElementById('progressFill');
+      state.uiCache.currentTime = document.getElementById('currentTime');
+
       CONFIG.scenes.forEach(scene => {
         state.architect.scene.volumes[scene.id] = 0.5;
         state.architect.scene.expanded[scene.id] = false;
