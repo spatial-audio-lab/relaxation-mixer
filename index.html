@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Przestrzeń Relaksu - Binauralne dźwięki 3D do medytacji i relaksacji">
+  <meta name="theme-color" content="#0a0e14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>🎧 Przestrzeń Relaksu — Binaural Mixer</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Aurora Animated Background -->
+  <div class="aurora-bg"></div>
+
+  <!-- Audio Context Activation Prompt -->
+  <div class="audio-prompt" id="audioPrompt">
+    <div class="audio-prompt-content">
+      <div class="audio-prompt-icon"></div>
+      <h1 class="audio-prompt-title">Przestrzeń relaksu</h1>
+      <p class="audio-prompt-text">
+        Załóż słuchawki i pozwól dźwiękom otoczyć cię ze wszystkich stron.
+      </p>
+      <button class="btn-start" id="btnStart">Wejdź w ciszę</button>
+    </div>
+  </div>
+
+  <!-- App Shell -->
+  <div class="app-shell">
+
+    <!-- TOP UI GROUP (Header) -->
+    <div id="top-ui-layer">
+      <!-- HEADER z globalnymi kontrolkami -->
+      <header class="header">
+        <div class="logo">
+          <span class="logo-icon">🎧</span>
+          <span>Przestrzeń Relaksu</span>
+        </div>
+        <div class="header-controls">
+          <!-- Globalne Play/Pause/Stop -->
+          <div class="global-controls">
+            <button class="btn-global" id="btnStopAll" aria-label="Zatrzymaj wszystko" title="Zatrzymaj wszystko">■</button>
+            <button class="btn-global play-all" id="btnPlayPauseAll" aria-label="Play wszystko" title="Pauza/Play wszystko">▶</button>
+          </div>
+        </div>
+      </header>
+    </div>
+
+    <!-- ==================== HOME (Biblioteka) ==================== -->
+    <main class="main-content" id="home-view">
+
+      <!-- Powitanie -->
+      <div class="home-greeting">
+        <div class="greeting-text" id="greetingText">Witaj</div>
+        <div class="greeting-sub">Znajdź chwilę dla siebie</div>
+      </div>
+
+      <!-- Kontynuuj (ostatnio odtwarzane) -->
+      <section class="home-section continue-section hidden-layer" id="continueSection">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Kontynuuj</div>
+          </div>
+        </div>
+        <div class="continue-row" id="continueRow">
+          <!-- Generowane przez JS -->
+        </div>
+      </section>
+
+      <!-- Medytacje -->
+      <section class="home-section">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Medytacje</div>
+            <div class="section-subtitle">Sesje prowadzone z dźwiękiem 3D</div>
+          </div>
+        </div>
+        <div class="library-grid" id="meditationGrid">
+          <!-- Generowane przez JS -->
+        </div>
+      </section>
+
+      <!-- Przestrzenie (szybki start ambientu) -->
+      <section class="home-section spaces-section" id="spacesSection">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Przestrzenie</div>
+            <div class="section-subtitle">Dźwięki tła — dotknij, aby włączyć</div>
+          </div>
+        </div>
+        <div class="spaces-row" id="spacesRow">
+          <!-- Generowane przez JS -->
+        </div>
+      </section>
+    </main>
+
+    <!-- ==================== PEŁNOEKRANOWY ODTWARZACZ ==================== -->
+    <main class="main-content hidden-layer" id="player-view">
+
+      <div class="player-view-header">
+        <button class="btn-back" id="btnBackToHome" aria-label="Wróć do biblioteki">←</button>
+        <span class="player-view-header-title">Teraz odtwarzane</span>
+        <button class="btn-mixer" id="btnOpenMixer" aria-label="Otwórz mikser tła" title="Mikser tła">🎛️</button>
+      </div>
+
+      <div class="player-header-extra">
+        <div class="master-volume">
+          <span>🔊</span>
+          <input type="range" id="masterVolume" min="0" max="100" value="80" aria-label="Głośność główna">
+        </div>
+        <button class="timer-mini" id="timerBtn" aria-label="Timer usypiania">--:--</button>
+      </div>
+
+      <div class="player-cover cover-art" id="playerCover">🧘</div>
+
+      <!-- Player -->
+      <div class="glass-card player-card">
+        <div class="player-title" id="meditationTitle">Wybierz sesję</div>
+
+        <div class="player-controls">
+          <button class="btn-control" id="btnStopMeditation" aria-label="Stop">■</button>
+          <button class="btn-play-main" id="btnPlayMeditation" aria-label="Odtwórz">▶</button>
+        </div>
+
+        <div class="progress-container">
+          <span class="progress-time" id="currentTime">00:00</span>
+          <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <span class="progress-time" id="totalTime">00:00</span>
+        </div>
+
+        <!-- HRTF Controls -->
+        <div class="hrtf-controls">
+          <div class="hrtf-toggle">
+            <span>🎧</span>
+            <div class="toggle-switch active" id="hrtfToggle" role="switch" aria-checked="true" aria-label="Przestrzeń 3D" tabindex="0"></div>
+            <span class="toggle-label">3D</span>
+          </div>
+          <div class="position-buttons" id="voicePosition" role="group" aria-label="Pozycja dźwięku">
+            <button class="btn-position" data-pos="left" aria-label="Lewa strona">◀</button>
+            <button class="btn-position selected" data-pos="center" aria-label="Środek">●</button>
+            <button class="btn-position" data-pos="right" aria-label="Prawa strona">▶</button>
+          </div>
+        </div>
+
+        <div class="volume-row">
+          <span>🔊</span>
+          <input type="range" id="voiceVolume" min="0" max="100" value="100" aria-label="Głośność medytacji">
+          <span class="volume-value" id="voiceVolumeValue">100%</span>
+        </div>
+
+        <!-- Sync toggle -->
+        <div class="sync-toggle">
+          <span>Synchronizuj przestrzeń z końcem medytacji</span>
+          <div class="toggle-switch" id="syncToggle" role="switch" aria-checked="false" aria-label="Synchronizacja" tabindex="0"></div>
+        </div>
+
+        <!-- Loading indicator -->
+        <div class="loading-indicator" id="voiceLoading" role="status" aria-live="polite">
+          <div class="spinner"></div>
+          <span>Przygotowuję przestrzeń...</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- ==================== MIKSER TŁA (drawer w odtwarzaczu) ==================== -->
+    <div class="mixer-drawer" id="mixerDrawer">
+      <div class="mixer-drawer-header">
+        <span class="mixer-drawer-title">🎛️ Mikser tła</span>
+        <button class="btn-close-mixer" id="btnCloseMixer" aria-label="Zamknij mikser">✕</button>
+      </div>
+
+      <div class="mixer-tabs" id="mixerTabs">
+        <button class="mixer-tab active" data-mixer-tab="ambient">🌲 Przestrzenie</button>
+        <button class="mixer-tab" data-mixer-tab="objects">🔮 Dźwięki 3D</button>
+      </div>
+
+      <div class="mixer-tab-panel active" id="mixer-tab-ambient">
+        <div class="item-list" id="spaceList">
+          <!-- Generowane przez JS -->
+        </div>
+
+        <p class="hint-text">
+          💡 Dotknij, aby włączyć/wyłączyć przestrzeń · przeciągnij suwak, by zmienić głośność
+        </p>
+      </div>
+
+      <div class="mixer-tab-panel" id="mixer-tab-objects">
+        <!-- Canvas 3D -->
+        <div class="canvas-card">
+          <canvas class="canvas-3d" id="spatialCanvas"></canvas>
+          <div class="canvas-hint">Przeciągnij obiekt aby zmienić pozycję w przestrzeni</div>
+        </div>
+
+        <!-- Lista dźwięków -->
+        <div class="item-list" id="soundsList">
+          <!-- Generowane przez JS -->
+        </div>
+
+        <!-- Panel kontroli 3D -->
+        <div class="controls-3d-panel" id="controls3dPanel">
+          <div class="controls-3d-header">
+            <span class="controls-3d-title" id="controls3dTitle">Pozycja 3D</span>
+            <button class="btn-close-3d" id="btnClose3d" aria-label="Zamknij">✕</button>
+          </div>
+          <div class="control-row">
+            <span class="control-label">🔊 Głośność</span>
+            <input type="range" id="baseVolume3d" min="0" max="200" value="100">
+            <span class="control-value" id="baseVolumeValue">100%</span>
+          </div>
+          <div class="control-row">
+            <span class="control-label">Odległość</span>
+            <input type="range" id="distance3d" min="1" max="100" value="20">
+            <span class="control-value" id="distanceValue">20m</span>
+          </div>
+          <div class="control-row">
+            <span class="control-label">Azymut (L↔R)</span>
+            <input type="range" id="azimuth3d" min="0" max="360" value="0">
+            <span class="control-value" id="azimuthValue">0°</span>
+          </div>
+          <div class="control-row">
+            <span class="control-label">Elevacja (↕)</span>
+            <input type="range" id="elevation3d" min="-90" max="90" value="0">
+            <span class="control-value" id="elevationValue">0°</span>
+          </div>
+        </div>
+
+        <p class="hint-text">
+          💡 Dotknij = włącz/wyłącz • Przytrzymaj = ustawienia 3D
+        </p>
+      </div>
+    </div>
+    <div class="mixer-backdrop" id="mixerBackdrop"></div>
+
+    <!-- MINI PLAYER (trwały, widoczny gdy medytacja wybrana) -->
+    <div class="mini-player hidden-layer" id="miniPlayer">
+      <div class="mini-player-progress"><div class="mini-player-progress-fill" id="miniProgressFill"></div></div>
+      <div class="mini-player-body">
+        <div class="mini-player-cover cover-art" id="miniPlayerCover">🧘</div>
+        <div class="mini-player-info">
+          <div class="mini-player-title" id="miniPlayerTitle">—</div>
+          <div class="mini-player-subtitle">Podróż</div>
+        </div>
+        <button class="btn-mini-control" id="btnMiniStop" aria-label="Stop">■</button>
+        <button class="btn-mini-play" id="btnMiniPlayPause" aria-label="Play/Pauza">▶</button>
+      </div>
+    </div>
+
+    <!-- Timer Panel (overlay) -->
+    <div class="timer-panel" id="timerPanel">
+      <div class="timer-panel-header">
+        <span class="timer-panel-title">⏱️ Timer przestrzeni</span>
+        <button class="btn-close-timer" id="btnCloseTimer" aria-label="Zamknij">✕</button>
+      </div>
+      <div class="timer-display" id="timerDisplay">--:--</div>
+      <div class="timer-presets" id="timerPresets">
+        <button class="btn-timer-preset" data-minutes="5">5 min</button>
+        <button class="btn-timer-preset" data-minutes="10">10 min</button>
+        <button class="btn-timer-preset" data-minutes="15">15 min</button>
+        <button class="btn-timer-preset" data-minutes="20">20 min</button>
+        <button class="btn-timer-preset" data-minutes="30">30 min</button>
+        <button class="btn-timer-preset" data-minutes="60">60 min</button>
+      </div>
+      <div class="timer-controls">
+        <button class="btn-timer-action" id="btnTimerStart">Uruchom timer</button>
+        <button class="btn-timer-action" id="btnTimerStop" style="display:none;">Zatrzymaj</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Status Message Toast -->
+  <div class="status-message" id="statusMessage" role="status" aria-live="polite"></div>
+
+  <!-- JavaScript -->
+  <script src="script.js"></script>
+</body>
+</html>
