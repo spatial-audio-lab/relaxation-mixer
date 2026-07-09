@@ -1,0 +1,176 @@
+﻿{
+  "_comment": "Jedno zrodlo prawdy dla biblioteki. Aby dodac medytacje: (1) wrzuc pliki audio do assets/audio/voice/ (najlepiej .webm + .mp3), (2) opcjonalnie okladke do assets/covers/, (3) dopisz wpis ponizej z polami 'group' i opcjonalnie 'subgroup'. Aplikacja renderuje TYLKO to, co jest w tym pliku i grupuje medytacje wg pol group/subgroup. Nowy temat: dodaj go do 'meditationGroups' (ikona + kolejnosc). Wpisy oznaczone \"_demo\": true wskazuja istniejacy plik body-scan tylko po to, by nawigacja byla testowalna — podmien je lub usun.",
+
+  "meditationGroups": [
+    { "id": "Mindfulness",       "title": "Mindfulness",       "icon": "🧘", "order": 1 },
+    { "id": "Aktorstwo",         "title": "Aktorstwo",         "icon": "🎭", "order": 2 },
+    { "id": "Medytacja w ruchu", "title": "Medytacja w ruchu", "icon": "🚶", "order": 3 }
+  ],
+
+  "meditations": [
+    {
+      "id": "body-scan",
+      "title": "Podróż przez ciało",
+      "group": "Mindfulness",
+      "author": "",
+      "icon": "🧘",
+      "description": "Delikatna wędrówka uwagi przez każdą część ciała",
+      "duration": "15 min",
+      "cover": "",
+      "src": {
+        "webm": "assets/audio/voice/body-scan.webm",
+        "mp3": "assets/audio/voice/body-scan.mp3"
+      },
+      "defaultVoicePosition": "center"
+    },
+    {
+      "id": "demo-czechow-1",
+      "_demo": true,
+      "title": "Poczucie całości",
+      "group": "Aktorstwo",
+      "subgroup": "Michaił Czechow",
+      "icon": "🎭",
+      "description": "DEMO — podmień plik i opis",
+      "duration": "15 min",
+      "cover": "",
+      "src": {
+        "webm": "assets/audio/voice/body-scan.webm",
+        "mp3": "assets/audio/voice/body-scan.mp3"
+      },
+      "defaultVoicePosition": "center"
+    },
+    {
+      "id": "demo-czechow-2",
+      "_demo": true,
+      "title": "Promieniowanie",
+      "group": "Aktorstwo",
+      "subgroup": "Michaił Czechow",
+      "icon": "🎭",
+      "description": "DEMO — podmień plik i opis",
+      "duration": "15 min",
+      "cover": "",
+      "src": {
+        "webm": "assets/audio/voice/body-scan.webm",
+        "mp3": "assets/audio/voice/body-scan.mp3"
+      },
+      "defaultVoicePosition": "center"
+    },
+    {
+      "id": "demo-meisner-1",
+      "_demo": true,
+      "title": "Powtórzenia",
+      "group": "Aktorstwo",
+      "subgroup": "Meisner",
+      "icon": "🎭",
+      "description": "DEMO — podmień plik i opis",
+      "duration": "15 min",
+      "cover": "",
+      "src": {
+        "webm": "assets/audio/voice/body-scan.webm",
+        "mp3": "assets/audio/voice/body-scan.mp3"
+      },
+      "defaultVoicePosition": "center"
+    },
+    {
+      "id": "demo-ruch-1",
+      "_demo": true,
+      "title": "Uważny ruch",
+      "group": "Medytacja w ruchu",
+      "icon": "🚶",
+      "description": "DEMO — podmień plik i opis",
+      "duration": "15 min",
+      "cover": "",
+      "src": {
+        "webm": "assets/audio/voice/body-scan.webm",
+        "mp3": "assets/audio/voice/body-scan.mp3"
+      },
+      "defaultVoicePosition": "center"
+    }
+  ],
+
+  "ambient": [
+    {
+      "id": "beach",
+      "title": "Plaża",
+      "icon": "🏖️",
+      "description": "Ciepły piasek, delikatne fale, śpiew mew",
+      "cover": "",
+      "src": {
+        "webm": "assets/audio/scenes/beach.webm",
+        "mp3": "assets/audio/scenes/beach.mp3"
+      }
+    },
+    {
+      "id": "mountain-meadow",
+      "title": "Polana",
+      "icon": "🏔️",
+      "description": "Szum wiatru w trawach, przestrzeń i cisza",
+      "cover": "",
+      "src": {
+        "webm": "assets/audio/scenes/mountain-meadow.webm",
+        "mp3": "assets/audio/scenes/mountain-meadow.mp3"
+      }
+    },
+    {
+      "id": "summer-forest",
+      "title": "Las",
+      "icon": "🌲",
+      "description": "Szelest liści, śpiew ptaków, zapach żywicy",
+      "cover": "",
+      "src": {
+        "webm": "assets/audio/scenes/summer-forest.webm",
+        "mp3": "assets/audio/scenes/summer-forest.mp3"
+      }
+    },
+    {
+      "id": "night-cicadas",
+      "title": "Cykady",
+      "icon": "🌙",
+      "description": "Ciepła letnia noc, rytmiczny chór owadów",
+      "cover": "",
+      "src": {
+        "webm": "assets/audio/scenes/night-cicadas.webm",
+        "mp3": "assets/audio/scenes/night-cicadas.mp3"
+      }
+    }
+  ],
+
+  "objects": [
+    {
+      "id": "bell",
+      "title": "Misa tybetańska",
+      "icon": "🔔",
+      "description": "Rezonujący dźwięk prowadzący do skupienia",
+      "cover": "",
+      "src": {
+        "webm": "assets/audio/objects/bell.webm",
+        "mp3": "assets/audio/objects/bell.mp3"
+      },
+      "defaultDistance": 20
+    },
+    {
+      "id": "blackbird",
+      "title": "Kos",
+      "icon": "🐦",
+      "description": "Melodia poranka, naturalny budzik duszy",
+      "cover": "",
+      "src": {
+        "webm": "assets/audio/objects/blackbird.webm",
+        "mp3": "assets/audio/objects/blackbird.mp3"
+      },
+      "defaultDistance": 20
+    },
+    {
+      "id": "stream",
+      "title": "Strumień",
+      "icon": "💧",
+      "description": "Nieustanny przepływ, symbol puszczania",
+      "cover": "",
+      "src": {
+        "webm": "assets/audio/objects/stream.webm",
+        "mp3": "assets/audio/objects/stream.mp3"
+      },
+      "defaultDistance": 20
+    }
+  ]
+}
