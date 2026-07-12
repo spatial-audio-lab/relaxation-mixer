@@ -24,6 +24,21 @@
       "defaultVoicePosition": "center"
     },
     {
+      "id": "oddech-w-ciele",
+      "title": "Przestrzeń oddechu",
+      "group": "Mindfulness",
+      "author": "Oskar Hamerski",
+      "icon": "🧘",
+      "description": "Medytacja oddechowa",
+      "duration": "15 min",
+      "cover": "",
+      "src": {
+        "webm": "assets/audio/voice/oddech-w-ciele.webm",
+        "mp3": "assets/audio/voice/oddech-w-ciele.mp3"
+      },
+      "defaultVoicePosition": "center"
+    },
+    {
       "id": "demo-czechow-1",
       "_demo": true,
       "title": "Poczucie całości",
