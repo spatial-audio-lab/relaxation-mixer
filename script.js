@@ -75,7 +75,7 @@ const state = {
   reverbSend: null,   // wysyłka na pogłos
   convolver: null,    // jeden wspólny pogłos
   wetGain: null,      // mokra ścieżka pogłosu → master
-  lowPowerMode: false, // fallback equalpower na słabszych urządzeniach
+  lowPowerMode: true, // fallback equalpower na słabszych urządzeniach
 
   // Global controls
   isGlobalPlaying: false,
