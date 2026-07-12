@@ -75,7 +75,7 @@ const state = {
   reverbSend: null,   // wysyłka na pogłos
   convolver: null,    // jeden wspólny pogłos
   wetGain: null,      // mokra ścieżka pogłosu → master
-  lowPowerMode: true, // fallback equalpower na słabszych urządzeniach
+  lowPowerMode: false, // fallback equalpower na słabszych urządzeniach
 
   // Global controls
   isGlobalPlaying: false,
@@ -292,11 +292,11 @@ function updateGreeting() {
   if (!el) return;
   const hour = new Date().getHours();
   let text;
-  if (hour < 5) text = 'Dobrej nocy';
+  if (hour < 5) text = 'Witaj nocny marku';
   else if (hour < 11) text = 'Dzień dobry';
   else if (hour < 18) text = 'Cześć';
   else if (hour < 22) text = 'Dobry wieczór';
-  else text = 'Dobrej nocy';
+  else text = 'Witaj!';
   el.textContent = text;
 }
 
