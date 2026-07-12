@@ -30,7 +30,7 @@
       "author": "Oskar Hamerski",
       "icon": "🧘",
       "description": "Medytacja oddechowa",
-      "duration": "15 min",
+      "duration": "10 min",
       "cover": "",
       "src": {
         "webm": "assets/audio/voice/oddech-w-ciele.webm",
@@ -153,7 +153,7 @@
   "objects": [
     {
       "id": "bell",
-      "title": "Misa tybetańska",
+      "title": "Dzwon",
       "icon": "🔔",
       "description": "Rezonujący dźwięk prowadzący do skupienia",
       "cover": "",
@@ -179,7 +179,7 @@
       "id": "stream",
       "title": "Strumień",
       "icon": "💧",
-      "description": "Nieustanny przepływ, symbol puszczania",
+      "description": "Nieustanny przepływ, symbol zmiany",
       "cover": "",
       "src": {
         "webm": "assets/audio/objects/stream.webm",
