@@ -24,9 +24,9 @@ const CONFIG = {
 
   // Pozycje HRTF dla medytacji
   hrtfPositions: {
-    left: { angle: -60, x: -0.866, z: -0.5 },
-    center: { angle: 0, x: 0, z: -1 },
-    right: { angle: 60, x: 0.866, z: -0.5 }
+    left: { angle: -60, x: -0.866, z: 0 },
+    center: { angle: 0, x: 0, z: 0 },
+    right: { angle: 60, x: 0.866, z: 0 }
   },
   
   // Ustawienia audio
