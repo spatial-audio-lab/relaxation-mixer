@@ -1,4 +1,4 @@
-﻿{
+{
   "_comment": "Jedno zrodlo prawdy dla biblioteki. Aby dodac medytacje: (1) wrzuc pliki audio do assets/audio/voice/ (najlepiej .webm + .mp3), (2) opcjonalnie okladke do assets/covers/, (3) dopisz wpis ponizej z polami 'group' i opcjonalnie 'subgroup'. Aplikacja renderuje TYLKO to, co jest w tym pliku i grupuje medytacje wg pol group/subgroup. Nowy temat: dodaj go do 'meditationGroups' (ikona + kolejnosc). Wpisy oznaczone \"_demo\": true wskazuja istniejacy plik body-scan tylko po to, by nawigacja byla testowalna — podmien je lub usun.",
 
   "meditationGroups": [
@@ -16,7 +16,7 @@
       "icon": "🧘",
       "description": "Delikatna wędrówka uwagi przez każdą część ciała",
       "duration": "15 min",
-      "cover": "assets/covers/body-scan2.webp",
+      "cover": "assets/covers/body-scanx.webp",
       "src": {
         "webm": "assets/audio/voice/body-scan.webm",
         "mp3": "assets/audio/voice/body-scan.mp3"
@@ -31,10 +31,25 @@
       "icon": "🧘",
       "description": "Uważna obserwacja oddechu i jego ruchu w ciele",
       "duration": "8 min",
-      "cover": "assets/covers/oddech-w-ciele2.webp",
+      "cover": "assets/covers/oddechx.webp",
       "src": {
         "webm": "assets/audio/voice/oddech-w-ciele.webm",
         "mp3": "assets/audio/voice/oddech-w-ciele.mp3"
+      },
+      "defaultVoicePosition": "center"
+    },
+    {
+      "id": "3-stop-oddech",
+      "title": "3-stopniowa przestrzeń na oddech",
+      "group": "Mindfulness",
+      "author": "",
+      "icon": "🧘",
+      "description": "Trzy kroki: zauważenie, skupienie na oddechu i powrót do całego ciała",
+      "duration": "3 min",
+      "cover": "assets/covers/3-stop.webp",
+      "src": {
+        "webm": "assets/audio/voice/3-stop-oddech.webm",
+        "mp3": "assets/audio/voice/3-stop-oddech.mp3"
       },
       "defaultVoicePosition": "center"
     },
