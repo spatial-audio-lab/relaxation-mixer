@@ -53,6 +53,21 @@
       },
       "defaultVoicePosition": "center"
     },
+     {
+      "id": "uwazne-chodzenie",
+      "title": "Uważne chodzenie",
+      "group": "Mindfulness",
+      "author": "Oskar Hamerski",
+      "icon": "🧘",
+      "description": "Medytacja w ruchu",
+      "duration": "10 min",
+      "cover": "assets/covers/uwazne-chodzenie.webp",
+      "src": {
+        "webm": "assets/audio/voice/uwazne-chodzenie.webm",
+        "mp3": "assets/audio/voice/uwazne-chodzenie.mp3"
+      },
+      "defaultVoicePosition": "center"
+    },
     {
       "id": "demo-czechow-1",
       "_demo": true,
