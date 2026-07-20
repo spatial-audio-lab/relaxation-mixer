@@ -141,7 +141,7 @@
       "duration": "15 min",
       "cover": "",
       "src": {
-        "webm": "assets/audio/voice/body-scan.webm",
+        "webm": "assets/audio/voice/uwazne-chodzenie.webm",
         "mp3": "assets/audio/voice/body-scan.mp3"
       },
       "defaultVoicePosition": "center"
