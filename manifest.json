@@ -69,6 +69,21 @@
       "defaultVoicePosition": "center"
     },
     {
+      "id": "praca-z-dyskomfortem",
+      "title": "Praca z dyskomfortem",
+      "group": "Mindfulness",
+      "author": "Oskar Hamerski",
+      "icon": "🧘",
+      "description": "Medytacja, która uczy uczy jak z ciekawością radzić sobie z fizycznym dyskomfortem oraz budować spokój poprzez akceptację chwili obecnej.",
+      "duration": "11 min",
+      "cover": "assets/covers/praca-z-dyskomfortem.webp",
+      "src": {
+        "webm": "assets/audio/voice/praca-z-dyskomfortem.webm",
+        "mp3": "assets/audio/voice/praca-z-dyskomfortem.mp3"
+      },
+      "defaultVoicePosition": "center"
+    },
+    {
       "id": "demo-czechow-1",
       "_demo": true,
       "title": "Poczucie całości",
