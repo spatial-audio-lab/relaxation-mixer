@@ -2,1236 +2,26 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="description" content="Przestrzeń Relaksu - Binauralne dźwięki 3D do medytacji i relaksacji">
   <meta name="theme-color" content="#0a0e14">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>🎧 Przestrzeń Relaksu — Binaural Mixer</title>
-  
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=JetBrains+Mono&family=Outfit:wght@300;500;600&display=swap" rel="stylesheet">
-  
-  <style>
-    /* ========================================
-       CSS VARIABLES - AMBIENT MORPHISM THEME
-       ======================================== */
-    :root {
-      /* Base Colors */
-      --deep-void: #0a0e14;
-      --surface: #121820;
-      --elevated: #1a222d;
-      --text-primary: #e8eef5;
-      --text-secondary: #7a8999;
-      
-      /* Accent Colors - Aurora Spectrum */
-      --cyan-glow: #32b8c6;
-      --teal-deep: #1a8a96;
-      --magenta-pulse: #c850a0;
-      --violet-mist: #6366f1;
-      
-      /* Typography */
-      --font-display: 'Outfit', sans-serif;
-      --font-body: 'DM Sans', sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
-      
-      /* Spacing */
-      --space-xs: 4px;
-      --space-sm: 8px;
-      --space-md: 16px;
-      --space-lg: 24px;
-      --space-xl: 32px;
-      --space-2xl: 48px;
-      
-      /* Transitions */
-      --transition-fast: 200ms ease-out;
-      --transition-normal: 300ms ease-out;
-      --transition-slow: 500ms ease-in-out;
-      --transition-ambient: 1000ms ease;
-    }
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
 
-    /* ========================================
-       RESET & BASE
-       ======================================== */
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html {
-      font-size: 16px;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-
-    body {
-      font-family: var(--font-body);
-      background: var(--deep-void);
-      color: var(--text-primary);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    /* ========================================
-       AMBIENT AURORA BACKGROUND
-       ======================================== */
-    .aurora-bg {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -1;
-      background: 
-        radial-gradient(ellipse at 20% 20%, rgba(50, 184, 198, 0.08) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 80%, rgba(200, 80, 160, 0.06) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.04) 0%, transparent 60%),
-        linear-gradient(135deg, #0a0e14 0%, #0f1a24 25%, #0a1628 50%, #140a20 75%, #0a0e14 100%);
-      background-size: 200% 200%;
-      animation: aurora-drift 30s ease-in-out infinite;
-    }
-
-    @keyframes aurora-drift {
-      0%, 100% { 
-        background-position: 0% 50%;
-        filter: hue-rotate(0deg);
-      }
-      50% { 
-        background-position: 100% 50%;
-        filter: hue-rotate(15deg);
-      }
-    }
-
-    /* Floating orbs */
-    .aurora-bg::before,
-    .aurora-bg::after {
-      content: '';
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(80px);
-      opacity: 0.4;
-      animation: float-orb 20s ease-in-out infinite;
-    }
-
-    .aurora-bg::before {
-      width: 400px;
-      height: 400px;
-      background: radial-gradient(circle, rgba(50, 184, 198, 0.3), transparent 70%);
-      top: 10%;
-      left: 10%;
-    }
-
-    .aurora-bg::after {
-      width: 300px;
-      height: 300px;
-      background: radial-gradient(circle, rgba(200, 80, 160, 0.25), transparent 70%);
-      bottom: 20%;
-      right: 15%;
-      animation-delay: -10s;
-    }
-
-    @keyframes float-orb {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      25% { transform: translate(30px, -20px) scale(1.05); }
-      50% { transform: translate(-20px, 30px) scale(0.95); }
-      75% { transform: translate(-30px, -10px) scale(1.02); }
-    }
-
-    /* ========================================
-       LAYOUT CONTAINER
-       ======================================== */
-    .app-container {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: var(--space-lg);
-      padding-bottom: 100px;
-    }
-
-    @media (min-width: 768px) {
-      .app-container {
-        max-width: 700px;
-        padding: var(--space-xl);
-      }
-    }
-
-    /* ========================================
-       HEADER
-       ======================================== */
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: var(--space-md);
-      margin-bottom: var(--space-xl);
-      background: rgba(18, 24, 32, 0.6);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 20px;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
-      font-family: var(--font-display);
-      font-weight: 500;
-      font-size: 1.1rem;
-      letter-spacing: -0.01em;
-    }
-
-    .logo-icon {
-      font-size: 1.4rem;
-    }
-
-    .master-volume {
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
-    }
-
-    .master-volume input[type="range"] {
-      width: 80px;
-    }
-
-    /* ========================================
-       GLASS PANEL
-       ======================================== */
-    .glass-panel {
-      background: rgba(18, 24, 32, 0.7);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 24px;
-      box-shadow: 
-        0 8px 32px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
-      padding: var(--space-lg);
-      margin-bottom: var(--space-lg);
-    }
-
-    .panel-title {
-      font-family: var(--font-display);
-      font-weight: 500;
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-bottom: var(--space-md);
-    }
-
-    /* ========================================
-       SESSION SELECTOR (Horizontal Scroll)
-       ======================================== */
-    .session-selector {
-      margin-bottom: var(--space-xl);
-    }
-
-    .session-cards {
-      display: flex;
-      gap: var(--space-md);
-      overflow-x: auto;
-      padding: var(--space-sm);
-      margin: 0 calc(-1 * var(--space-lg));
-      padding-left: var(--space-lg);
-      padding-right: var(--space-lg);
-      scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-
-    .session-cards::-webkit-scrollbar {
-      display: none;
-    }
-
-    @media (min-width: 700px) {
-      .session-cards {
-        justify-content: center;
-        flex-wrap: wrap;
-        overflow-x: visible;
-        margin: 0;
-        padding: var(--space-sm);
-      }
-    }
-
-    .session-card {
-      flex-shrink: 0;
-      width: 110px;
-      height: 130px;
-      background: var(--surface);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 20px;
-      padding: var(--space-md);
-      cursor: pointer;
-      transition: all var(--transition-normal);
-      scroll-snap-align: start;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      gap: var(--space-sm);
-    }
-
-    .session-card:hover {
-      border-color: rgba(50, 184, 198, 0.3);
-      transform: translateY(-2px);
-    }
-
-    .session-card.selected {
-      border-color: rgba(50, 184, 198, 0.5);
-      box-shadow: 
-        0 0 40px rgba(50, 184, 198, 0.2),
-        inset 0 0 20px rgba(50, 184, 198, 0.05);
-      transform: scale(1.05);
-    }
-
-    .session-card.selected .session-icon {
-      filter: drop-shadow(0 0 12px rgba(50, 184, 198, 0.6));
-    }
-
-    .session-icon {
-      font-size: 2rem;
-      transition: filter var(--transition-normal);
-    }
-
-    .session-name {
-      font-family: var(--font-display);
-      font-weight: 500;
-      font-size: 0.85rem;
-      color: var(--text-primary);
-      line-height: 1.2;
-    }
-
-    /* ========================================
-       PANEL MEDYTACJI
-       ======================================== */
-    .meditation-panel {
-      text-align: center;
-    }
-
-    .meditation-title {
-      font-family: var(--font-display);
-      font-weight: 600;
-      font-size: 1.25rem;
-      margin-bottom: var(--space-lg);
-      color: var(--text-primary);
-    }
-
-    .playback-buttons {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: var(--space-md);
-      margin-bottom: var(--space-lg);
-    }
-
-    .btn-play {
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      border: none;
-      background: linear-gradient(135deg, var(--cyan-glow), var(--teal-deep));
-      color: white;
-      font-size: 1.5rem;
-      cursor: pointer;
-      transition: all var(--transition-normal);
-      box-shadow: 0 4px 24px rgba(50, 184, 198, 0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .btn-play:hover {
-      transform: scale(1.08);
-      box-shadow: 0 6px 32px rgba(50, 184, 198, 0.5);
-    }
-
-    .btn-play.playing {
-      animation: breathe 4s ease-in-out infinite;
-      background: linear-gradient(90deg, var(--cyan-glow), var(--magenta-pulse), var(--cyan-glow));
-      background-size: 200% 100%;
-      animation: breathe 4s ease-in-out infinite, gradient-shift 3s linear infinite;
-    }
-
-    @keyframes breathe {
-      0%, 100% { 
-        box-shadow: 0 0 20px rgba(50, 184, 198, 0.4);
-        transform: scale(1);
-      }
-      50% { 
-        box-shadow: 0 0 40px rgba(50, 184, 198, 0.6);
-        transform: scale(1.05);
-      }
-    }
-
-    @keyframes gradient-shift {
-      0% { background-position: 0% 50%; }
-      100% { background-position: 200% 50%; }
-    }
-
-    .btn-secondary {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: var(--elevated);
-      color: var(--text-primary);
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all var(--transition-fast);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .btn-secondary:hover {
-      border-color: rgba(50, 184, 198, 0.3);
-      background: rgba(50, 184, 198, 0.1);
-    }
-
-    /* Volume Control */
-    .volume-control {
-      display: flex;
-      align-items: center;
-      gap: var(--space-md);
-      margin-bottom: var(--space-lg);
-      padding: 0 var(--space-md);
-    }
-
-    .volume-icon {
-      font-size: 1.2rem;
-      color: var(--text-secondary);
-    }
-
-    .volume-value {
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      min-width: 40px;
-    }
-
-    /* HRTF Controls */
-    .hrtf-controls {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: var(--space-lg);
-      margin-bottom: var(--space-lg);
-      flex-wrap: wrap;
-    }
-
-    .hrtf-toggle {
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
-    }
-
-    .toggle-switch {
-      position: relative;
-      width: 56px;
-      height: 28px;
-      background: var(--elevated);
-      border-radius: 14px;
-      cursor: pointer;
-      transition: background var(--transition-normal);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .toggle-switch.active {
-      background: var(--cyan-glow);
-      border-color: var(--cyan-glow);
-    }
-
-    .toggle-switch::after {
-      content: '';
-      position: absolute;
-      top: 3px;
-      left: 3px;
-      width: 20px;
-      height: 20px;
-      background: white;
-      border-radius: 50%;
-      transition: transform var(--transition-normal);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-
-    .toggle-switch.active::after {
-      transform: translateX(28px);
-    }
-
-    .position-buttons {
-      display: flex;
-      gap: var(--space-xs);
-    }
-
-    .btn-position {
-      width: 40px;
-      height: 36px;
-      border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: var(--elevated);
-      color: var(--text-secondary);
-      font-family: var(--font-body);
-      font-weight: 500;
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: all var(--transition-fast);
-    }
-
-    .btn-position:hover {
-      border-color: rgba(50, 184, 198, 0.3);
-    }
-
-    .btn-position.selected {
-      background: rgba(50, 184, 198, 0.2);
-      border-color: var(--cyan-glow);
-      color: var(--cyan-glow);
-      box-shadow: 0 0 12px rgba(50, 184, 198, 0.3);
-    }
-
-    /* Progress Bar */
-    .progress-container {
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
-      margin-bottom: var(--space-lg);
-    }
-
-    .progress-time {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-      min-width: 45px;
-    }
-
-    .progress-bar {
-      flex: 1;
-      height: 8px;
-      background: var(--elevated);
-      border-radius: 4px;
-      overflow: hidden;
-      cursor: pointer;
-      position: relative;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--cyan-glow), var(--magenta-pulse), var(--cyan-glow));
-      background-size: 200% 100%;
-      border-radius: 4px;
-      width: 0%;
-      transition: width 0.1s linear;
-    }
-
-    .progress-fill.playing {
-      animation: shimmer 3s linear infinite;
-    }
-
-    @keyframes shimmer {
-      0% { background-position: 0% 50%; }
-      100% { background-position: 200% 50%; }
-    }
-
-    /* Sync Toggle */
-    .sync-toggle {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: var(--space-sm);
-      padding: var(--space-sm);
-      background: rgba(255, 255, 255, 0.02);
-      border-radius: 12px;
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-    }
-
-    .sync-toggle .toggle-switch {
-      width: 48px;
-      height: 24px;
-    }
-
-    .sync-toggle .toggle-switch::after {
-      width: 16px;
-      height: 16px;
-      top: 3px;
-      left: 3px;
-    }
-
-    .sync-toggle .toggle-switch.active::after {
-      transform: translateX(24px);
-    }
-
-    /* ========================================
-       RANGE SLIDER (Custom z wypełnieniem)
-       ======================================== */
-    input[type="range"] {
-      -webkit-appearance: none;
-      appearance: none;
-      background: transparent;
-      cursor: pointer;
-      flex: 1;
-      position: relative;
-    }
-
-    .range-wrapper {
-      position: relative;
-      flex: 1;
-      display: flex;
-      align-items: center;
-    }
-
-    input[type="range"]::-webkit-slider-track {
-      height: 6px;
-      background: var(--elevated);
-      border-radius: 3px;
-    }
-
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 18px;
-      height: 18px;
-      background: white;
-      border-radius: 50%;
-      box-shadow: 
-        0 2px 8px rgba(0, 0, 0, 0.3),
-        0 0 16px rgba(50, 184, 198, 0.4);
-      transition: transform var(--transition-fast);
-      position: relative;
-      z-index: 2;
-    }
-
-    input[type="range"]::-webkit-slider-thumb:hover {
-      transform: scale(1.2);
-    }
-
-    input[type="range"]::-moz-range-track {
-      height: 6px;
-      background: var(--elevated);
-      border-radius: 3px;
-      border: none;
-    }
-
-    input[type="range"]::-moz-range-thumb {
-      width: 18px;
-      height: 18px;
-      background: white;
-      border-radius: 50%;
-      border: none;
-      box-shadow: 
-        0 2px 8px rgba(0, 0, 0, 0.3),
-        0 0 16px rgba(50, 184, 198, 0.4);
-    }
-
-    .range-fill {
-      position: absolute;
-      left: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      height: 6px;
-      background: linear-gradient(90deg, var(--cyan-glow), var(--teal-deep));
-      border-radius: 3px;
-      pointer-events: none;
-      width: 0%;
-      transition: width 0.1s ease;
-      z-index: 1;
-    }
-
-    /* ========================================
-       ARCHITEKT PRZESTRZENI - COLLAPSIBLE
-       ======================================== */
-    .architect-panel {
-      overflow: hidden;
-    }
-
-    .architect-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: var(--space-lg);
-      cursor: pointer;
-      transition: all var(--transition-normal);
-      border-radius: 24px;
-      margin-bottom: 0;
-    }
-
-    .architect-header:hover {
-      background: rgba(50, 184, 198, 0.03);
-    }
-
-    .architect-title-wrapper {
-      display: flex;
-      align-items: center;
-      gap: var(--space-md);
-    }
-
-    .architect-icon {
-      font-size: 1.5rem;
-    }
-
-    .architect-title {
-      font-family: var(--font-display);
-      font-weight: 600;
-      font-size: 1.1rem;
-      color: var(--text-primary);
-    }
-
-    .architect-subtitle {
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      margin-top: 2px;
-    }
-
-    .expand-icon {
-      font-size: 1.2rem;
-      color: var(--text-secondary);
-      transition: transform var(--transition-normal);
-    }
-
-    .architect-panel.expanded .expand-icon {
-      transform: rotate(180deg);
-    }
-
-    .architect-content {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height var(--transition-slow);
-    }
-
-    .architect-panel.expanded .architect-content {
-      max-height: 3000px;
-    }
-
-    .architect-inner {
-      padding: 0 var(--space-lg) var(--space-lg) var(--space-lg);
-    }
-
-    /* Scene List */
-    .scene-list {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-sm);
-      margin-bottom: var(--space-xl);
-    }
-
-    .scene-item {
-      border-radius: 12px;
-      overflow: hidden;
-      transition: all var(--transition-normal);
-    }
-
-    .scene-header {
-      display: flex;
-      align-items: center;
-      gap: var(--space-md);
-      padding: var(--space-md);
-      cursor: pointer;
-      transition: all var(--transition-normal);
-    }
-
-    .scene-header:hover {
-      background: rgba(50, 184, 198, 0.05);
-    }
-
-    .scene-item.selected .scene-header {
-      background: rgba(50, 184, 198, 0.08);
-      border-left: 3px solid var(--cyan-glow);
-      padding-left: calc(var(--space-md) - 3px);
-    }
-
-    .scene-radio {
-      position: relative;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      border: 2px solid var(--text-secondary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all var(--transition-fast);
-      flex-shrink: 0;
-    }
-
-    .scene-item.selected .scene-radio {
-      border-color: var(--cyan-glow);
-    }
-
-    .scene-radio::after {
-      content: '';
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--cyan-glow);
-      transform: scale(0);
-      transition: transform var(--transition-fast);
-    }
-
-    .scene-item.selected .scene-radio::after {
-      transform: scale(1);
-    }
-
-    .scene-icon {
-      font-size: 1.3rem;
-    }
-
-    .scene-name {
-      flex: 1;
-      font-family: var(--font-display);
-      font-weight: 500;
-      font-size: 0.95rem;
-    }
-
-    .scene-expand-icon {
-      font-size: 0.7rem;
-      color: var(--text-secondary);
-      transition: transform var(--transition-fast);
-    }
-
-    .scene-item.expanded .scene-expand-icon {
-      transform: rotate(180deg);
-    }
-
-    .scene-details {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height var(--transition-normal);
-      padding: 0 var(--space-md);
-    }
-
-    .scene-item.expanded .scene-details {
-      max-height: 100px;
-      padding: 0 var(--space-md) var(--space-md) calc(var(--space-md) + 20px + var(--space-md));
-    }
-
-    .scene-volume-control {
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
-      margin-top: var(--space-sm);
-    }
-
-    .scene-volume-label {
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      min-width: 70px;
-    }
-
-    /* Objects List */
-    .objects-list {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-md);
-      margin-bottom: var(--space-xl);
-    }
-
-    .object-item {
-      padding: var(--space-md);
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.02);
-      transition: all var(--transition-normal);
-    }
-
-    .object-item.disabled {
-      opacity: 0.4;
-    }
-
-    .object-item.enabled {
-      background: rgba(50, 184, 198, 0.05);
-    }
-
-    .object-header {
-      display: flex;
-      align-items: center;
-      gap: var(--space-md);
-      margin-bottom: var(--space-sm);
-    }
-
-    .object-checkbox {
-      width: 22px;
-      height: 22px;
-      border-radius: 6px;
-      border: 2px solid var(--text-secondary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all var(--transition-fast);
-      flex-shrink: 0;
-    }
-
-    .object-checkbox:hover {
-      border-color: var(--cyan-glow);
-    }
-
-    .object-checkbox.checked {
-      background: var(--cyan-glow);
-      border-color: var(--cyan-glow);
-    }
-
-    .object-checkbox.checked::after {
-      content: '✓';
-      color: white;
-      font-size: 0.8rem;
-      font-weight: bold;
-    }
-
-    .object-icon {
-      font-size: 1.2rem;
-    }
-
-    .object-name {
-      flex: 1;
-      font-family: var(--font-display);
-      font-weight: 500;
-      font-size: 0.9rem;
-    }
-
-    .object-controls {
-      display: flex;
-      align-items: center;
-      gap: var(--space-md);
-      padding-left: calc(22px + var(--space-md));
-    }
-
-    .object-position {
-      display: flex;
-      gap: 2px;
-    }
-
-    .object-position .btn-position {
-      width: 32px;
-      height: 28px;
-      font-size: 0.7rem;
-      border-radius: 6px;
-    }
-
-    .object-volume {
-      flex: 1;
-    }
-
-    /* Timer Section */
-    .timer-section {
-      padding: var(--space-lg);
-      background: rgba(99, 102, 241, 0.05);
-      border-radius: 16px;
-      border: 1px solid rgba(99, 102, 241, 0.1);
-    }
-
-    .timer-header {
-      text-align: center;
-      margin-bottom: var(--space-md);
-    }
-
-    .timer-label {
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-bottom: var(--space-xs);
-    }
-
-    .timer-display {
-      font-family: var(--font-mono);
-      font-size: 2.5rem;
-      color: var(--violet-mist);
-      margin-bottom: var(--space-md);
-    }
-
-    .timer-display.active {
-      color: var(--cyan-glow);
-    }
-
-    .timer-presets {
-      display: flex;
-      gap: var(--space-sm);
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-bottom: var(--space-md);
-    }
-
-    .btn-timer-preset {
-      padding: var(--space-sm) var(--space-md);
-      background: var(--elevated);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      color: var(--text-primary);
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: all var(--transition-fast);
-    }
-
-    .btn-timer-preset:hover {
-      border-color: var(--violet-mist);
-      background: rgba(99, 102, 241, 0.1);
-    }
-
-    .btn-timer-preset.active {
-      background: rgba(99, 102, 241, 0.2);
-      border-color: var(--violet-mist);
-      color: var(--violet-mist);
-    }
-
-    .timer-controls {
-      display: flex;
-      gap: var(--space-sm);
-      justify-content: center;
-    }
-
-    .btn-timer {
-      padding: var(--space-sm) var(--space-lg);
-      background: var(--elevated);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      color: var(--text-primary);
-      font-family: var(--font-body);
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: all var(--transition-fast);
-    }
-
-    .btn-timer:hover {
-      border-color: var(--violet-mist);
-      background: rgba(99, 102, 241, 0.1);
-    }
-
-    .btn-timer.active {
-      background: linear-gradient(135deg, var(--violet-mist), var(--magenta-pulse));
-      border-color: var(--violet-mist);
-      color: white;
-      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
-    }
-
-    /* ========================================
-       LOADING STATE
-       ======================================== */
-    .loading-indicator {
-      display: none;
-      align-items: center;
-      justify-content: center;
-      gap: var(--space-sm);
-      padding: var(--space-md);
-      color: var(--text-secondary);
-      font-size: 0.85rem;
-    }
-
-    .loading-indicator.visible {
-      display: flex;
-    }
-
-    .spinner {
-      width: 20px;
-      height: 20px;
-      border: 2px solid var(--elevated);
-      border-top-color: var(--cyan-glow);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* ========================================
-       STATUS MESSAGE
-       ======================================== */
-    .status-message {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--surface);
-      border: 1px solid rgba(50, 184, 198, 0.3);
-      padding: var(--space-sm) var(--space-lg);
-      border-radius: 30px;
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      opacity: 0;
-      transition: opacity var(--transition-normal);
-      pointer-events: none;
-      z-index: 100;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-    }
-
-    .status-message.visible {
-      opacity: 1;
-    }
-
-    /* ========================================
-       AUDIO CONTEXT PROMPT
-       ======================================== */
-    .audio-prompt {
-      position: fixed;
-      inset: 0;
-      background: var(--deep-void);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      opacity: 1;
-      transition: opacity var(--transition-slow);
-    }
-
-    .audio-prompt.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .audio-prompt-content {
-      text-align: center;
-      padding: var(--space-2xl);
-    }
-
-    .audio-prompt-icon {
-      width: 100px;
-      height: 100px;
-      margin: 0 auto var(--space-xl);
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, 
-        rgba(50, 184, 198, 0.4), 
-        rgba(50, 184, 198, 0.1) 50%,
-        rgba(200, 80, 160, 0.1) 80%,
-        transparent);
-      box-shadow: 
-        0 0 60px rgba(50, 184, 198, 0.3),
-        0 0 100px rgba(50, 184, 198, 0.1),
-        inset 0 0 30px rgba(50, 184, 198, 0.2);
-      animation: pulse-orb 4s ease-in-out infinite;
-    }
-
-    @keyframes pulse-orb {
-      0%, 100% { 
-        transform: scale(1);
-        box-shadow: 
-          0 0 60px rgba(50, 184, 198, 0.3),
-          0 0 100px rgba(50, 184, 198, 0.1),
-          inset 0 0 30px rgba(50, 184, 198, 0.2);
-      }
-      50% { 
-        transform: scale(1.1);
-        box-shadow: 
-          0 0 80px rgba(50, 184, 198, 0.5),
-          0 0 120px rgba(200, 80, 160, 0.2),
-          inset 0 0 40px rgba(50, 184, 198, 0.3);
-      }
-    }
-
-    .audio-prompt-title {
-      font-family: var(--font-display);
-      font-weight: 300;
-      font-size: 1.8rem;
-      margin-bottom: var(--space-md);
-      letter-spacing: -0.02em;
-    }
-
-    .audio-prompt-text {
-      color: var(--text-secondary);
-      margin-bottom: var(--space-xl);
-      max-width: 300px;
-    }
-
-    .btn-start {
-      padding: var(--space-md) var(--space-xl);
-      font-family: var(--font-display);
-      font-weight: 500;
-      font-size: 1rem;
-      background: linear-gradient(135deg, var(--cyan-glow), var(--teal-deep));
-      color: white;
-      border: none;
-      border-radius: 30px;
-      cursor: pointer;
-      transition: all var(--transition-normal);
-      box-shadow: 0 4px 24px rgba(50, 184, 198, 0.4);
-    }
-
-    .btn-start:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 32px rgba(50, 184, 198, 0.5);
-    }
-
-    /* ========================================
-       RESPONSIVE
-       ======================================== */
-    @media (max-width: 400px) {
-      .session-card {
-        width: 100px;
-        height: 120px;
-      }
-      
-      .session-icon {
-        font-size: 1.6rem;
-      }
-      
-      .hrtf-controls {
-        flex-direction: column;
-        gap: var(--space-md);
-      }
-      
-      .object-controls {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--space-sm);
-      }
-      
-      .object-volume {
-        width: 100%;
-      }
-    }
-
-    /* Reduced Motion */
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
-      
-      .aurora-bg {
-        animation: none;
-      }
-      
-      .aurora-bg::before,
-      .aurora-bg::after {
-        animation: none;
-      }
-      
-      .btn-play.playing {
-        animation: none;
-      }
-      
-      .progress-fill.playing {
-        animation: none;
-      }
-      
-      .audio-prompt-icon {
-        animation: none;
-      }
-    }
-
-    /* Focus visible */
-    :focus-visible {
-      outline: 2px solid var(--cyan-glow);
-      outline-offset: 2px;
-    }
-    
-    button:focus-visible,
-    input:focus-visible,
-    .toggle-switch:focus-visible,
-    .session-card:focus-visible {
-      outline: 2px solid var(--cyan-glow);
-      outline-offset: 2px;
-    }
-  </style>
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <!-- Aurora Animated Background -->
   <div class="aurora-bg"></div>
 
-  <!-- Audio Context Activation Prompt -->
+  <!-- Audio Context Activation Prompt (ekran powitalny) -->
   <div class="audio-prompt" id="audioPrompt">
     <div class="audio-prompt-content">
       <div class="audio-prompt-icon"></div>
@@ -1239,1396 +29,309 @@
       <p class="audio-prompt-text">
         Załóż słuchawki i pozwól dźwiękom otoczyć cię ze wszystkich stron.
       </p>
+
+      <!-- Mikro-onboarding: co można robić -->
+      <div class="audio-features">
+        <div class="audio-feature">
+          <span class="audio-feature-icon">🧘</span>
+          <span class="audio-feature-title">Medytacje</span>
+          <span class="audio-feature-desc">prowadzone sesje</span>
+        </div>
+        <div class="audio-feature">
+          <span class="audio-feature-icon">🎛️</span>
+          <span class="audio-feature-title">Mikser tła</span>
+          <span class="audio-feature-desc">zbuduj przestrzeń</span>
+        </div>
+        <div class="audio-feature">
+          <span class="audio-feature-icon">🎧</span>
+          <span class="audio-feature-title">Dźwięk 3D</span>
+          <span class="audio-feature-desc">wokół ciebie</span>
+        </div>
+      </div>
+
       <button class="btn-start" id="btnStart">Wejdź w ciszę</button>
+
+      <!-- Oznakowanie KPO / UE (wymagane) -->
+      <footer class="kpo-banner">
+        <img src="assets/kpo-belka.jpg" alt="Logotyp Krajowy Plan Odbudowy, flaga Rzeczpospolitej Polskiej, napis „Sfinansowane przez Unię Europejską NextGenerationEU” oraz flaga Unii Europejskiej">
+      </footer>
     </div>
   </div>
 
-  <!-- Main App Container -->
-  <div class="app-container">
-    
-    <!-- Header -->
+  <!-- App Shell -->
+  <div class="app-shell">
+
+    <!-- HEADER z globalnymi kontrolkami -->
     <header class="header">
       <div class="logo">
         <span class="logo-icon">🎧</span>
-        <span>Przestrzeń relaksu</span>
+        <span class="logo-text">Przestrzeń Relaksu</span>
       </div>
-      <div class="master-volume">
-        <span>🔊</span>
-        <div class="range-wrapper">
-          <div class="range-fill" id="masterVolumeFill"></div>
-          <input type="range" id="masterVolume" min="0" max="100" value="80" aria-label="Głośność główna">
+      <div class="header-controls">
+        <div class="global-controls">
+          <button class="btn-global" id="btnStopAll" aria-label="Zatrzymaj wszystko" title="Zatrzymaj wszystko">■</button>
+          <button class="btn-global play-all" id="btnPlayPauseAll" aria-label="Play wszystko" title="Pauza/Play wszystko">▶</button>
         </div>
+        <button class="timer-mini" id="timerBtn" aria-label="Timer usypiania — wyłącza dźwięk po czasie" title="Timer usypiania">
+          <span class="timer-mini-ico" aria-hidden="true">⏱️</span>
+          <span class="timer-mini-text" id="timerBtnText">Timer</span>
+        </button>
       </div>
     </header>
 
-    <!-- Session Selector -->
-    <section class="session-selector">
-      <div class="session-cards" id="sessionCards">
-        <!-- Session cards will be generated by JS -->
-      </div>
-    </section>
+    <!-- Pasek głośności głównej (pełna szerokość, pod nagłówkiem — długi, wygodny suwak) -->
+    <div class="master-volume-bar">
+      <span class="master-volume-bar-ico" aria-hidden="true">🔊</span>
+      <input type="range" id="masterVolume" min="0" max="100" value="80" aria-label="Głośność główna">
+      <span class="master-volume-bar-value" id="masterVolumeValue">80%</span>
+    </div>
 
-    <!-- PANEL MEDYTACJI -->
-    <section class="glass-panel meditation-panel">
-      <h2 class="meditation-title" id="meditationTitle">Wybierz sesję</h2>
-      
-      <div class="playback-buttons" role="group" aria-label="Kontrola odtwarzania">
-        <button class="btn-secondary" id="btnStop" aria-label="Zatrzymaj">■</button>
-        <button class="btn-play" id="btnPlay" aria-label="Odtwórz">▶</button>
-      </div>
-      
-      <div class="volume-control">
-        <span class="volume-icon">🔊</span>
-        <div class="range-wrapper">
-          <div class="range-fill" id="voiceVolumeFill"></div>
-          <input type="range" id="voiceVolume" min="0" max="100" value="100" aria-label="Głośność sesji">
-        </div>
-        <span class="volume-value" id="voiceVolumeValue">100%</span>
-      </div>
-      
-      <div class="hrtf-controls">
-        <div class="hrtf-toggle">
-          <span>🎧</span>
-          <div class="toggle-switch active" id="hrtfToggle" role="switch" aria-checked="true" aria-label="Przestrzeń 3D" tabindex="0"></div>
-          <span style="font-size: 0.8rem; color: var(--text-secondary);">3D</span>
-        </div>
-        <div class="position-buttons" id="voicePosition" role="group" aria-label="Pozycja dźwięku">
-          <button class="btn-position" data-pos="left" aria-label="Lewa strona">◀</button>
-          <button class="btn-position selected" data-pos="center" aria-label="Środek">●</button>
-          <button class="btn-position" data-pos="right" aria-label="Prawa strona">▶</button>
-        </div>
-      </div>
-      
-      <div class="progress-container">
-        <span class="progress-time" id="currentTime">00:00</span>
-        <div class="progress-bar" id="progressBar">
-          <div class="progress-fill" id="progressFill"></div>
-        </div>
-        <span class="progress-time" id="totalTime">00:00</span>
-      </div>
-      
-      <div class="sync-toggle">
-        <span style="font-size: 0.85rem;">Synchronizuj przestrzeń z końcem medytacji</span>
-        <div class="toggle-switch" id="syncToggle" role="switch" aria-checked="false" aria-label="Synchronizacja" tabindex="0"></div>
-      </div>
-      
-      <div class="loading-indicator" id="voiceLoading" role="status" aria-live="polite">
-        <div class="spinner"></div>
-        <span>Przygotowuję przestrzeń...</span>
-      </div>
-    </section>
+    <!-- ==================== STREFA: MEDYTACJE ==================== -->
+    <main class="main-content" id="medytacje-view">
 
-    <!-- ARCHITEKT PRZESTRZENI -->
-    <section class="glass-panel architect-panel" id="architectPanel">
-      <div class="architect-header" id="architectHeader">
-        <div class="architect-title-wrapper">
-          <span class="architect-icon">🏗️</span>
+      <!-- Powitanie -->
+      <div class="home-greeting">
+        <div class="greeting-text" id="greetingText">Witaj</div>
+        <div class="greeting-sub">Znajdź chwilę dla siebie</div>
+      </div>
+
+      <!-- Kontynuuj (ostatnio odtwarzane) — widoczne tylko na poziomie tematów -->
+      <section class="home-section continue-section hidden-layer" id="continueSection">
+        <div class="section-header">
           <div>
-            <div class="architect-title">Architekt przestrzeni</div>
-            <div class="architect-subtitle">Zbuduj swoją przestrzeń dźwiękową</div>
+            <div class="section-title">Kontynuuj</div>
           </div>
         </div>
-        <span class="expand-icon">▼</span>
+        <div class="continue-row" id="continueRow"></div>
+      </section>
+
+      <!-- Nagłówek nawigacji biblioteki (wstecz + breadcrumb) — ukryty na poziomie tematów -->
+      <div class="library-nav hidden-layer" id="libraryNav">
+        <button class="btn-back btn-back-sm" id="btnLibraryBack" aria-label="Wróć">←</button>
+        <div class="library-breadcrumb" id="libraryBreadcrumb"></div>
       </div>
 
-      <div class="architect-content">
-        <div class="architect-inner">
-          
-          <!-- Scenes -->
-          <h3 class="panel-title">🌍 Wybierz przestrzeń tła</h3>
-          <div class="scene-list" id="sceneList" role="radiogroup">
-            <!-- Scene items will be generated by JS -->
+      <section class="home-section library-section">
+        <div class="section-header" id="librarySectionHeader">
+          <div>
+            <div class="section-title">Medytacje</div>
+            <div class="section-subtitle">Wybierz temat</div>
           </div>
+        </div>
 
-          <!-- Objects -->
-          <h3 class="panel-title">🔮 Dodaj dźwięki</h3>
-          <div class="objects-list" id="objectsList">
-            <!-- Object items will be generated by JS -->
-          </div>
+        <!-- Poziom 1: tematy (grupy) -->
+        <div class="tile-grid" id="libraryGroups"></div>
+        <!-- Poziom 2: podtematy (podgrupy) -->
+        <div class="tile-grid hidden-layer" id="librarySubgroups"></div>
+        <!-- Poziom 3: pliki (medytacje) -->
+        <div class="item-list hidden-layer" id="libraryFiles"></div>
 
-          <!-- Timer -->
-          <div class="timer-section">
-            <div class="timer-header">
-              <div class="timer-label">Czas trwania przestrzeni</div>
-              <div class="timer-display" id="timerDisplay">--:--</div>
-            </div>
-            <div class="timer-presets">
-              <button class="btn-timer-preset" data-minutes="5">5 min</button>
-              <button class="btn-timer-preset" data-minutes="10">10 min</button>
-              <button class="btn-timer-preset" data-minutes="15">15 min</button>
-              <button class="btn-timer-preset" data-minutes="20">20 min</button>
-              <button class="btn-timer-preset" data-minutes="30">30 min</button>
-              <button class="btn-timer-preset" data-minutes="60">60 min</button>
-            </div>
-            <div class="timer-controls">
-              <button class="btn-timer" id="btnTimerStart">Uruchom timer</button>
-              <button class="btn-timer" id="btnTimerStop" style="display:none;">Zatrzymaj timer</button>
-            </div>
-          </div>
+        <!-- Pusty stan -->
+        <p class="hint-text hidden-layer" id="libraryEmpty">Brak medytacji w bibliotece. Dodaj pliki i wpisy w manifest.json.</p>
+      </section>
+    </main>
 
+    <!-- ==================== STREFA: MIKSER TŁA ==================== -->
+    <main class="main-content hidden-layer" id="mixer-view">
+
+      <div class="section-header">
+        <div>
+          <div class="section-title">🎛️ Mikser tła</div>
+          <div class="section-subtitle">Zbuduj własną przestrzeń dźwiękową</div>
         </div>
       </div>
-    </section>
+
+      <div class="mixer-tabs" id="mixerTabs">
+        <button class="mixer-tab active" data-mixer-tab="ambient">🌲 Przestrzenie</button>
+        <button class="mixer-tab" data-mixer-tab="objects">🔮 Dźwięki 3D</button>
+      </div>
+
+      <!-- Sekcja: Przestrzenie (ambient) -->
+      <div class="mixer-tab-panel active" id="mixer-tab-ambient">
+        <div class="item-list" id="spaceList"></div>
+        <p class="hint-text">
+          💡 Dotknij, aby włączyć/wyłączyć przestrzeń · przeciągnij suwak, by zmienić głośność
+        </p>
+      </div>
+
+      <!-- Sekcja: Dźwięki 3D (obiekty) -->
+      <div class="mixer-tab-panel" id="mixer-tab-objects">
+        <!-- Przycisk otwierający radar 3D na pełnym ekranie -->
+        <button type="button" class="radar-open-btn" id="btnOpenRadar" aria-haspopup="dialog" aria-controls="radarOverlay">
+          <span class="radar-open-ico" aria-hidden="true">🧭</span>
+          <span class="radar-open-text">
+            <span class="radar-open-title">Radar przestrzenny 3D</span>
+            <span class="radar-open-sub">Rozstaw dźwięki wokół siebie</span>
+          </span>
+          <span class="radar-open-chevron" aria-hidden="true">⤢</span>
+        </button>
+
+        <!-- Lista dźwięków (skrol nie zmienia stanu) -->
+        <div class="item-list sounds-list" id="soundsList"></div>
+
+        <p class="hint-text">
+          💡 <b>⏻</b> włącza/wyłącza dźwięk · dotknij wiersz lub <b>⚙</b> aby dostroić pozycję · <b>🧭</b> otwiera radar
+        </p>
+      </div>
+    </main>
+
+    <!-- ==================== PEŁNOEKRANOWY ODTWARZACZ ==================== -->
+    <main class="main-content hidden-layer" id="player-view">
+
+      <div class="player-view-header">
+        <button class="btn-back" id="btnBackToHome" aria-label="Wróć do biblioteki">←</button>
+        <span class="player-view-header-title">Teraz odtwarzane</span>
+        <button class="btn-mixer" id="btnOpenMixer" aria-label="Przejdź do miksera tła" title="Mikser tła">🎛️</button>
+      </div>
+
+      <div class="player-cover cover-art" id="playerCover">🧘</div>
+
+      <div class="glass-card player-card">
+        <div class="player-title" id="meditationTitle">Wybierz sesję</div>
+
+        <div class="player-controls">
+          <button class="btn-control" id="btnStopMeditation" aria-label="Stop">■</button>
+          <button class="btn-play-main" id="btnPlayMeditation" aria-label="Odtwórz">▶</button>
+        </div>
+
+        <div class="progress-container">
+          <span class="progress-time" id="currentTime">00:00</span>
+          <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <span class="progress-time" id="totalTime">00:00</span>
+        </div>
+
+        <div class="hrtf-controls">
+          <div class="hrtf-toggle">
+            <span>🎧</span>
+            <div class="toggle-switch active" id="hrtfToggle" role="switch" aria-checked="true" aria-label="Przestrzeń 3D" tabindex="0"></div>
+            <span class="toggle-label">3D</span>
+          </div>
+          <div class="position-buttons" id="voicePosition" role="group" aria-label="Pozycja dźwięku">
+            <button class="btn-position" data-pos="left" aria-label="Lewa strona">◀</button>
+            <button class="btn-position selected" data-pos="center" aria-label="Środek">●</button>
+            <button class="btn-position" data-pos="right" aria-label="Prawa strona">▶</button>
+          </div>
+        </div>
+
+        <div class="volume-row">
+          <span>🔊</span>
+          <input type="range" id="voiceVolume" min="0" max="100" value="100" aria-label="Głośność medytacji">
+          <span class="volume-value" id="voiceVolumeValue">100%</span>
+        </div>
+
+        <div class="sync-toggle">
+          <span>Synchronizuj przestrzeń z końcem medytacji</span>
+          <div class="toggle-switch" id="syncToggle" role="switch" aria-checked="false" aria-label="Synchronizacja" tabindex="0"></div>
+        </div>
+
+        <div class="loading-indicator" id="voiceLoading" role="status" aria-live="polite">
+          <div class="spinner"></div>
+          <span>Przygotowuję przestrzeń...</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- Pełnoekranowa nakładka radaru 3D (otwierana na żądanie) -->
+    <div class="radar-overlay" id="radarOverlay" role="dialog" aria-modal="true" aria-label="Radar przestrzenny 3D" aria-hidden="true">
+      <div class="radar-overlay-header">
+        <span class="radar-overlay-title">🧭 Radar przestrzenny</span>
+        <button type="button" class="btn-close-radar" id="btnCloseRadar" aria-label="Zamknij radar">✕</button>
+      </div>
+      <div class="radar-stage">
+        <div class="canvas-card" id="radarCard">
+          <div class="canvas-wrap">
+            <canvas class="canvas-3d" id="spatialCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+      <p class="radar-overlay-hint">Przeciągnij obiekt, aby ustawić kierunek i odległość · dostrój szczegóły przez <b>⚙</b> w liście</p>
+    </div>
+
+    <!-- Bottom-sheet: ustawienia pozycji dźwięku 3D -->
+    <div class="sound-sheet-backdrop" id="sound3dBackdrop"></div>
+    <div class="controls-3d-panel sound-sheet" id="controls3dPanel">
+      <div class="controls-3d-header">
+        <span class="controls-3d-title" id="controls3dTitle">Pozycja 3D</span>
+        <button class="btn-close-3d" id="btnClose3d" aria-label="Zamknij">✕</button>
+      </div>
+      <div class="control-row">
+        <span class="control-label">🔊 Głośność</span>
+        <input type="range" id="baseVolume3d" min="0" max="200" value="100">
+        <span class="control-value" id="baseVolumeValue">100%</span>
+      </div>
+      <div class="control-row">
+        <span class="control-label">Odległość</span>
+        <input type="range" id="distance3d" min="1" max="100" value="20">
+        <span class="control-value" id="distanceValue">20m</span>
+      </div>
+      <div class="control-row">
+        <span class="control-label">Azymut (L↔R)</span>
+        <input type="range" id="azimuth3d" min="0" max="360" value="0">
+        <span class="control-value" id="azimuthValue">0°</span>
+      </div>
+      <div class="control-row">
+        <span class="control-label">Elevacja (↕)</span>
+        <input type="range" id="elevation3d" min="-90" max="90" value="0">
+        <span class="control-value" id="elevationValue">0°</span>
+      </div>
+    </div>
+
+    <!-- MINI PLAYER (trwały, nad dolną nawigacją) -->
+    <div class="mini-player hidden-layer" id="miniPlayer">
+      <div class="mini-player-progress"><div class="mini-player-progress-fill" id="miniProgressFill"></div></div>
+      <div class="mini-player-body">
+        <div class="mini-player-cover cover-art" id="miniPlayerCover">🧘</div>
+        <div class="mini-player-info">
+          <div class="mini-player-title" id="miniPlayerTitle">—</div>
+          <div class="mini-player-subtitle">Podróż</div>
+        </div>
+        <button class="btn-mini-control" id="btnMiniStop" aria-label="Stop">■</button>
+        <button class="btn-mini-play" id="btnMiniPlayPause" aria-label="Play/Pauza">▶</button>
+      </div>
+    </div>
+
+    <!-- DOLNA NAWIGACJA — dwie strefy -->
+    <nav class="bottom-nav" id="bottomNav" role="tablist" aria-label="Strefy aplikacji">
+      <button class="nav-tab active" data-zone="medytacje" id="btnZoneMedytacje" role="tab" aria-selected="true">
+        <span class="nav-tab-icon">🧘</span>
+        <span class="nav-tab-label">Medytacje</span>
+      </button>
+      <button class="nav-tab" data-zone="mixer" id="btnZoneMixer" role="tab" aria-selected="false">
+        <span class="nav-tab-icon">🎛️</span>
+        <span class="nav-tab-label">Mikser</span>
+        <span class="nav-tab-dot" id="mixerNavDot" aria-hidden="true"></span>
+      </button>
+    </nav>
+
+    <!-- Timer Panel (overlay) -->
+    <div class="timer-panel" id="timerPanel">
+      <div class="timer-panel-header">
+        <span class="timer-panel-title">⏱️ Timer przestrzeni</span>
+        <button class="btn-close-timer" id="btnCloseTimer" aria-label="Zamknij">✕</button>
+      </div>
+      <div class="timer-display" id="timerDisplay">--:--</div>
+      <div class="timer-presets" id="timerPresets">
+        <button class="btn-timer-preset" data-minutes="5">5 min</button>
+        <button class="btn-timer-preset" data-minutes="10">10 min</button>
+        <button class="btn-timer-preset" data-minutes="15">15 min</button>
+        <button class="btn-timer-preset" data-minutes="20">20 min</button>
+        <button class="btn-timer-preset" data-minutes="30">30 min</button>
+        <button class="btn-timer-preset" data-minutes="60">60 min</button>
+      </div>
+      <div class="timer-controls">
+        <button class="btn-timer-action" id="btnTimerStart">Uruchom timer</button>
+        <button class="btn-timer-action" id="btnTimerStop" style="display:none;">Zatrzymaj</button>
+      </div>
+    </div>
 
   </div>
 
-  <!-- Status Message -->
+  <!-- Status Message Toast -->
   <div class="status-message" id="statusMessage" role="status" aria-live="polite"></div>
 
-  <script>
-    // ========================================
-    // CONFIGURATION
-    // ========================================
-    
-    /**
-     * [NAPRAWA #3] Migracja do formatu WebM (Opus)
-     * 
-     * Format WebM z kodekiem Opus zapewnia:
-     * - Bezszwowe zapętlanie (brak padding jak w MP3)
-     * - Lepszą kompresję przy wyższej jakości
-     * - Natywną obsługę Web Audio API
-     * 
-     * UWAGA: Pliki .webm muszą zostać przygotowane z odpowiednimi parametrami:
-     * ffmpeg -i input.mp3 -c:a libopus -b:a 128k -vn output.webm
-     */
-    const CONFIG = {
-      sessions: [
-        { id: 'body-scan', name: 'Podróż przez ciało', icon: '🧘', file: 'assets/audio/voice/body-scan.webm', fallback: 'assets/audio/voice/body-scan.mp3', description: 'Delikatna wędrówka uwagi przez każdą część ciała.' },
-        { id: 'breath-sitting', name: 'Spokojny oddech', icon: '🌬️', file: 'assets/audio/voice/breath-sitting.webm', fallback: 'assets/audio/voice/breath-sitting.mp3', description: 'Powrót do naturalnego rytmu oddechu.' },
-        { id: 'sounds-thoughts', name: 'Przestrzeń myśli', icon: '🎵', file: 'assets/audio/voice/sounds-thoughts.webm', fallback: 'assets/audio/voice/sounds-thoughts.mp3', description: 'Obserwuj myśli jak chmury na niebie.' },
-        { id: 'relaxation', name: 'Głębokie rozluźnienie', icon: '💆', file: 'assets/audio/voice/relaxation.webm', fallback: 'assets/audio/voice/relaxation.mp3', description: 'Systematyczne uwalnianie napięć ciała.' },
-        { id: 'visualization', name: 'Wewnętrzna podróż', icon: '🌌', file: 'assets/audio/voice/visualization.webm', fallback: 'assets/audio/voice/visualization.mp3', description: 'Wizualizacja prowadząca do miejsca spokoju.' }
-      ],
-      scenes: [
-        { id: 'beach', name: 'Plaża o zmierzchu', icon: '🏖️', file: 'assets/audio/scenes/beach.webm', fallback: 'assets/audio/scenes/beach.mp3', description: 'Ciepły piasek, delikatne fale, odległy śpiew mew' },
-        { id: 'mountain-meadow', name: 'Górska polana', icon: '🏔️', file: 'assets/audio/scenes/mountain-meadow.webm', fallback: 'assets/audio/scenes/mountain-meadow.mp3', description: 'Szum wiatru w trawach, przestrzeń i cisza' },
-        { id: 'summer-forest', name: 'Letni las', icon: '🌲', file: 'assets/audio/scenes/summer-forest.webm', fallback: 'assets/audio/scenes/summer-forest.mp3', description: 'Szelest liści, śpiew ptaków, zapach żywicy' },
-        { id: 'night-cicadas', name: 'Nocne cykady', icon: '🌙', file: 'assets/audio/scenes/night-cicadas.webm', fallback: 'assets/audio/scenes/night-cicadas.mp3', description: 'Ciepła letnia noc, rytmiczny chór owadów' }
-      ],
-      objects: [
-        { id: 'bell', name: 'Tybetańska misa', icon: '🔔', file: 'assets/audio/objects/bell.webm', fallback: 'assets/audio/objects/bell.mp3', description: 'Rezonujący dźwięk prowadzący do skupienia' },
-        { id: 'clock', name: 'Stary zegar', icon: '🕰️', file: 'assets/audio/objects/clock.webm', fallback: 'assets/audio/objects/clock.mp3', description: 'Miarowy rytm odmierzający chwile ciszy' },
-        { id: 'blackbird', name: 'Śpiew kosa', icon: '🐦', file: 'assets/audio/objects/blackbird.webm', fallback: 'assets/audio/objects/blackbird.mp3', description: 'Melodia poranka, naturalny budzik duszy' },
-        { id: 'stream', name: 'Leśny strumień', icon: '💧', file: 'assets/audio/objects/stream.webm', fallback: 'assets/audio/objects/stream.mp3', description: 'Nieustanny przepływ, symbol puszczania' }
-      ],
-      hrtfPositions: {
-        left: { angle: -60, x: -0.866, z: -0.5 },
-        center: { angle: 0, x: 0, z: -1 },
-        right: { angle: 60, x: 0.866, z: -0.5 }
-      },
-      fadeInTime: 0.15,
-      fadeOutTime: 0.8,
-      
-      /**
-       * [NAPRAWA #4] Czas wygładzania pozycji przestrzennej
-       * Wartość w sekundach dla setTargetAtTime() - eliminuje trzaski
-       */
-      positionSmoothingTime: 0.05
-    };
-
-    // ========================================
-    // APPLICATION STATE
-    // ========================================
-    
-    /**
-     * [NAPRAWA #1 & #5] Rozszerzony model stanu
-     * 
-     * Każdy element audio posiada teraz unikalny identyfikator instancji (instanceId),
-     * który pozwala na weryfikację czy operacja dotyczy aktualnej instancji.
-     * 
-     * Dodano również znacznik wersji stanu (_stateVersion) dla reaktywnego UI.
-     */
-    const state = {
-      _stateVersion: 0,  // [NAPRAWA #5] Inkrementowany przy każdej zmianie stanu
-      
-      // [OPTIMIZATION] Cache DOM references to avoid N+1 queries
-      uiCache: {
-        objects: {}
-      },
-
-      audioContext: null,
-      masterGain: null,
-      lowShelfFilter: null,
-      
-      // PANEL MEDYTACJI
-      meditation: {
-        selected: CONFIG.sessions[0].id,
-        buffer: null,
-        source: null,
-        gainNode: null,
-        pannerNode: null,
-        isPlaying: false,
-        isPaused: false,
-        pauseTime: 0,
-        startTime: 0,
-        duration: 0,
-        volume: 1,
-        hrtfEnabled: true,
-        position: 'center',
-        syncWithSpace: false
-      },
-      
-      // ARCHITEKT PRZESTRZENI
-      architect: {
-        isExpanded: false,
-        scene: {
-          active: null,
-          sources: {},
-          gains: {},
-          buffers: {},
-          volumes: {},
-          expanded: {},
-          instanceIds: {}  // [NAPRAWA #1] Śledzenie instancji źródeł
-        },
-        objects: {},
-        timer: {
-          duration: 0,
-          remaining: 0,
-          isRunning: false,
-          intervalId: null,
-          selectedPreset: null,
-          startSoundBuffer: null,
-          endSoundBuffer: null
-        }
-      },
-      
-      masterVolume: 0.8
-    };
-
-    // Initialize objects state with instance tracking
-    CONFIG.objects.forEach(obj => {
-      state.architect.objects[obj.id] = {
-        enabled: false,
-        buffer: null,
-        source: null,
-        gainNode: null,
-        pannerNode: null,
-        volume: 0.5,
-        position: 'center',
-        instanceId: null,      // [NAPRAWA #1] Unikalny ID instancji
-        isLoading: false       // [NAPRAWA #2] Flaga ładowania
-      };
-    });
-
-    // ========================================
-    // UTILITY FUNCTIONS
-    // ========================================
-    
-    /**
-     * [NAPRAWA #1] Generowanie unikalnych identyfikatorów instancji
-     * Używamy kombinacji timestamp + random dla unikatowości
-     */
-    function generateInstanceId() {
-      return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    }
-    
-    /**
-     * [NAPRAWA #5] Funkcja inkrementująca wersję stanu
-     * Wywołuje reaktywne odświeżenie UI
-     */
-    function markStateChanged() {
-      state._stateVersion++;
-      // Wywołaj odświeżenie UI w następnej klatce animacji
-      requestAnimationFrame(syncAllUI);
-    }
-
-    function formatTime(seconds) {
-      if (!seconds || isNaN(seconds)) return '00:00';
-      const mins = Math.floor(seconds / 60);
-      const secs = Math.floor(seconds % 60);
-      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-
-    function showStatus(message, duration = 2000) {
-      const el = document.getElementById('statusMessage');
-      el.textContent = message;
-      el.classList.add('visible');
-      setTimeout(() => el.classList.remove('visible'), duration);
-    }
-
-    function updateRangeFill(rangeInput, fillElement) {
-      const value = (rangeInput.value / rangeInput.max) * 100;
-      fillElement.style.width = `${value}%`;
-    }
-
-    // ========================================
-    // AUDIO CONTEXT INITIALIZATION
-    // ========================================
-    async function initAudioContext() {
-      if (state.audioContext) return;
-      
-      state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      
-      state.masterGain = state.audioContext.createGain();
-      state.masterGain.gain.value = state.masterVolume;
-      
-      state.lowShelfFilter = state.audioContext.createBiquadFilter();
-      state.lowShelfFilter.type = 'lowshelf';
-      state.lowShelfFilter.frequency.value = 200;
-      state.lowShelfFilter.gain.value = -6;
-      
-      state.masterGain.connect(state.lowShelfFilter);
-      state.lowShelfFilter.connect(state.audioContext.destination);
-      
-      // Meditation nodes
-      state.meditation.gainNode = state.audioContext.createGain();
-      state.meditation.pannerNode = state.audioContext.createPanner();
-      state.meditation.pannerNode.panningModel = 'HRTF';
-      state.meditation.pannerNode.distanceModel = 'inverse';
-      state.meditation.pannerNode.refDistance = 1;
-      state.meditation.pannerNode.maxDistance = 10000;
-      state.meditation.pannerNode.rolloffFactor = 1;
-      
-      updateMeditationPosition(state.meditation.position);
-      
-      state.meditation.gainNode.connect(state.meditation.pannerNode);
-      state.meditation.pannerNode.connect(state.masterGain);
-      
-      // Scene gains
-      CONFIG.scenes.forEach(scene => {
-        const gain = state.audioContext.createGain();
-        gain.gain.value = 0;
-        gain.connect(state.masterGain);
-        state.architect.scene.gains[scene.id] = gain;
-        state.architect.scene.volumes[scene.id] = 0.5;
-        state.architect.scene.expanded[scene.id] = false;
-        state.architect.scene.instanceIds[scene.id] = null;
-      });
-      
-      // Object nodes
-      CONFIG.objects.forEach(obj => {
-        const gain = state.audioContext.createGain();
-        const panner = state.audioContext.createPanner();
-        panner.panningModel = 'HRTF';
-        panner.distanceModel = 'inverse';
-        panner.refDistance = 1;
-        
-        gain.connect(panner);
-        panner.connect(state.masterGain);
-        
-        state.architect.objects[obj.id].gainNode = gain;
-        state.architect.objects[obj.id].pannerNode = panner;
-        
-        updateObjectPosition(obj.id, 'center');
-      });
-      
-      loadTimerSounds();
-      
-      console.log('Audio context initialized');
-    }
-
-    // ========================================
-    // AUDIO LOADING
-    // ========================================
-    
-    /**
-     * [NAPRAWA #3] Ładowanie z fallbackiem MP3 -> WebM
-     * 
-     * Próbujemy najpierw załadować WebM (bezszwowe pętle),
-     * a jeśli nie jest dostępny, używamy MP3 jako fallback.
-     */
-    async function loadAudioBuffer(url, fallbackUrl = null) {
-      try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const arrayBuffer = await response.arrayBuffer();
-        return await state.audioContext.decodeAudioData(arrayBuffer);
-      } catch (error) {
-        console.warn(`Could not load audio: ${url}`, error.message);
-        
-        // [NAPRAWA #3] Próba fallbacku do MP3
-        if (fallbackUrl) {
-          console.log(`Trying fallback: ${fallbackUrl}`);
-          try {
-            const fallbackResponse = await fetch(fallbackUrl);
-            if (!fallbackResponse.ok) throw new Error(`HTTP ${fallbackResponse.status}`);
-            const fallbackArrayBuffer = await fallbackResponse.arrayBuffer();
-            return await state.audioContext.decodeAudioData(fallbackArrayBuffer);
-          } catch (fallbackError) {
-            console.warn(`Fallback also failed: ${fallbackUrl}`, fallbackError.message);
-          }
-        }
-        
-        return null;
-      }
-    }
-
-    async function loadMeditationSession(sessionId) {
-      const session = CONFIG.sessions.find(s => s.id === sessionId);
-      if (!session) return;
-      
-      showStatus(`Ładuję: ${session.name}...`);
-      document.getElementById('voiceLoading').classList.add('visible');
-      
-      const buffer = await loadAudioBuffer(session.file, session.fallback);
-      
-      if (buffer) {
-        state.meditation.buffer = buffer;
-        state.meditation.duration = buffer.duration;
-        document.getElementById('totalTime').textContent = formatTime(buffer.duration);
-        showStatus(`${session.name} — gotowe`);
-      } else {
-        state.meditation.buffer = null;
-        state.meditation.duration = 0;
-        document.getElementById('totalTime').textContent = '--:--';
-        showStatus(`Nie mogę odnaleźć: ${session.name}`, 3000);
-      }
-      
-      document.getElementById('voiceLoading').classList.remove('visible');
-      markStateChanged();
-    }
-
-    async function loadTimerSounds() {
-      state.architect.timer.startSoundBuffer = await loadAudioBuffer(
-        'assets/audio/timer/start.webm',
-        'assets/audio/timer/start.mp3'
-      );
-      state.architect.timer.endSoundBuffer = await loadAudioBuffer(
-        'assets/audio/timer/end.webm',
-        'assets/audio/timer/end.mp3'
-      );
-    }
-
-    function playTimerSound(buffer) {
-      if (!buffer) return;
-      const source = state.audioContext.createBufferSource();
-      source.buffer = buffer;
-      source.connect(state.masterGain);
-      source.start();
-    }
-
-    // ========================================
-    // MEDITATION PLAYBACK
-    // ========================================
-    function playMeditation() {
-      if (!state.meditation.buffer) {
-        showStatus('Wybierz najpierw sesję');
-        return;
-      }
-      
-      if (state.meditation.isPlaying) return;
-      
-      state.meditation.source = state.audioContext.createBufferSource();
-      state.meditation.source.buffer = state.meditation.buffer;
-      state.meditation.source.connect(state.meditation.gainNode);
-      
-      const offset = state.meditation.isPaused ? state.meditation.pauseTime : 0;
-      
-      state.meditation.source.start(0, offset);
-      state.meditation.startTime = state.audioContext.currentTime - offset;
-      state.meditation.isPlaying = true;
-      state.meditation.isPaused = false;
-      
-      state.meditation.source.onended = () => {
-        if (state.meditation.isPlaying) {
-          stopMeditation();
-          
-          if (state.meditation.syncWithSpace) {
-            stopAllSpace();
-          }
-        }
-      };
-      
-      updatePlayButton(true);
-      requestAnimationFrame(updateProgress);
-      markStateChanged();
-    }
-
-    function pauseMeditation() {
-      if (!state.meditation.isPlaying) return;
-      
-      const elapsed = state.audioContext.currentTime - state.meditation.startTime;
-      state.meditation.pauseTime = elapsed;
-      
-      state.meditation.source.stop();
-      state.meditation.source.disconnect();
-      state.meditation.source = null;
-      
-      state.meditation.isPlaying = false;
-      state.meditation.isPaused = true;
-      
-      updatePlayButton(false);
-      markStateChanged();
-    }
-
-    function stopMeditation() {
-      if (state.meditation.source) {
-        state.meditation.source.stop();
-        state.meditation.source.disconnect();
-        state.meditation.source = null;
-      }
-      
-      state.meditation.isPlaying = false;
-      state.meditation.isPaused = false;
-      state.meditation.pauseTime = 0;
-      
-      updatePlayButton(false);
-      updateProgressBar(0);
-      document.getElementById('currentTime').textContent = '00:00';
-      markStateChanged();
-    }
-
-    function updateProgress() {
-      if (!state.meditation.isPlaying) return;
-      
-      const elapsed = state.audioContext.currentTime - state.meditation.startTime;
-      const progress = Math.min(elapsed / state.meditation.duration, 1);
-      
-      updateProgressBar(progress);
-      document.getElementById('currentTime').textContent = formatTime(elapsed);
-      
-      if (progress < 1) {
-        requestAnimationFrame(updateProgress);
-      }
-    }
-
-    function updateProgressBar(progress) {
-      const fill = document.getElementById('progressFill');
-      fill.style.width = `${progress * 100}%`;
-      if (state.meditation.isPlaying) {
-        fill.classList.add('playing');
-      } else {
-        fill.classList.remove('playing');
-      }
-    }
-
-    function updatePlayButton(isPlaying) {
-      const btn = document.getElementById('btnPlay');
-      btn.textContent = isPlaying ? '‖' : '▶';
-      btn.setAttribute('aria-label', isPlaying ? 'Pauza' : 'Odtwórz');
-      btn.classList.toggle('playing', isPlaying);
-    }
-
-    /**
-     * [NAPRAWA #4] Płynna zmiana pozycji z wygładzaniem
-     * 
-     * Użycie setTargetAtTime() zamiast setValueAtTime() eliminuje
-     * nagłe skoki wartości, które powodują trzaski (audio pops).
-     * 
-     * Parametr timeConstant określa czas wygładzania w sekundach.
-     */
-    function updateMeditationPosition(position) {
-      const pos = CONFIG.hrtfPositions[position];
-      if (!pos || !state.meditation.pannerNode || !state.audioContext) return;
-      
-      const currentTime = state.audioContext.currentTime;
-      const smoothingTime = CONFIG.positionSmoothingTime;
-      
-      // [NAPRAWA #4] Płynne przejście logarytmiczne
-      state.meditation.pannerNode.positionX.setTargetAtTime(pos.x, currentTime, smoothingTime);
-      state.meditation.pannerNode.positionY.setTargetAtTime(0, currentTime, smoothingTime);
-      state.meditation.pannerNode.positionZ.setTargetAtTime(pos.z, currentTime, smoothingTime);
-      
-      state.meditation.position = position;
-      markStateChanged();
-    }
-
-    function toggleHRTF(enabled) {
-      state.meditation.hrtfEnabled = enabled;
-      if (!state.meditation.gainNode || !state.meditation.pannerNode || !state.masterGain) return;
-      
-      if (enabled) {
-        state.meditation.gainNode.disconnect();
-        state.meditation.gainNode.connect(state.meditation.pannerNode);
-        updateMeditationPosition(state.meditation.position);
-      } else {
-        state.meditation.gainNode.disconnect();
-        state.meditation.gainNode.connect(state.masterGain);
-      }
-      markStateChanged();
-    }
-
-    // ========================================
-    // SPACE (ARCHITECT) PLAYBACK
-    // ========================================
-    
-    /**
-     * [NAPRAWA #1] Bezpieczne zatrzymanie sceny z weryfikacją instancji
-     * 
-     * Problem: Przy szybkim przełączaniu scen, setTimeout mógł
-     * usunąć nową instancję zamiast starej.
-     * 
-     * Rozwiązanie: Każda instancja ma unikalny ID, który jest
-     * weryfikowany przed wykonaniem operacji cleanup.
-     */
-    function stopSceneSafe(sceneId, instanceId) {
-      const currentSource = state.architect.scene.sources[sceneId];
-      const currentInstanceId = state.architect.scene.instanceIds[sceneId];
-      
-      // [NAPRAWA #1] Weryfikacja czy to ta sama instancja
-      if (currentInstanceId !== instanceId) {
-        console.log(`[Race Guard] Skipping cleanup for outdated instance: ${instanceId}`);
-        return;
-      }
-      
-      if (currentSource) {
-        try {
-          currentSource.stop();
-          currentSource.disconnect();
-        } catch (e) {
-          // Source już zatrzymany - ignoruj
-        }
-        delete state.architect.scene.sources[sceneId];
-        state.architect.scene.instanceIds[sceneId] = null;
-      }
-    }
-
-    async function selectScene(sceneId) {
-      const scene = CONFIG.scenes.find(s => s.id === sceneId);
-      if (!scene) return;
-      
-      showStatus(`Przygotowuję: ${scene.name}...`);
-      
-      // Zatrzymaj poprzednią scenę jeśli istnieje
-      if (state.architect.scene.active && state.architect.scene.sources[state.architect.scene.active]) {
-        const oldSceneId = state.architect.scene.active;
-        const oldInstanceId = state.architect.scene.instanceIds[oldSceneId];
-        const oldGain = state.architect.scene.gains[oldSceneId];
-        
-        oldGain.gain.setTargetAtTime(0, state.audioContext.currentTime, CONFIG.fadeOutTime);
-        
-        // [NAPRAWA #1] Zaplanuj cleanup z weryfikacją instancji
-        setTimeout(() => {
-          stopSceneSafe(oldSceneId, oldInstanceId);
-        }, CONFIG.fadeOutTime * 1000 * 3);
-      }
-      
-      // Ładuj bufor jeśli nie istnieje
-      if (!state.architect.scene.buffers[sceneId]) {
-        state.architect.scene.buffers[sceneId] = await loadAudioBuffer(scene.file, scene.fallback);
-      }
-      
-      const buffer = state.architect.scene.buffers[sceneId];
-      if (!buffer) {
-        showStatus(`Nie mogę odnaleźć tej przestrzeni`, 3000);
-        return;
-      }
-      
-      // [NAPRAWA #1] Generuj nowy ID instancji
-      const newInstanceId = generateInstanceId();
-      
-      const source = state.audioContext.createBufferSource();
-      source.buffer = buffer;
-      source.loop = true;
-      source.connect(state.architect.scene.gains[sceneId]);
-      
-      const targetVolume = state.architect.scene.volumes[sceneId] ?? 0.5;
-      state.architect.scene.gains[sceneId].gain.setValueAtTime(0, state.audioContext.currentTime);
-      state.architect.scene.gains[sceneId].gain.setTargetAtTime(targetVolume, state.audioContext.currentTime, CONFIG.fadeInTime);
-      
-      source.start();
-      
-      // Zapisz źródło i ID instancji
-      state.architect.scene.sources[sceneId] = source;
-      state.architect.scene.instanceIds[sceneId] = newInstanceId;
-      state.architect.scene.active = sceneId;
-      
-      markStateChanged();
-      showStatus(`${scene.name} — jesteś tutaj`);
-    }
-
-    function updateSceneVolume(sceneId, volume) {
-      state.architect.scene.volumes[sceneId] = volume;
-      
-      if (state.architect.scene.gains[sceneId] && state.architect.scene.active === sceneId) {
-        state.architect.scene.gains[sceneId].gain.setTargetAtTime(volume, state.audioContext.currentTime, 0.1);
-      }
-      markStateChanged();
-    }
-
-    function stopScene(sceneId) {
-      const instanceId = state.architect.scene.instanceIds[sceneId];
-      if (!state.architect.scene.sources[sceneId]) return;
-      
-      const gain = state.architect.scene.gains[sceneId];
-      
-      gain.gain.setTargetAtTime(0, state.audioContext.currentTime, CONFIG.fadeOutTime);
-      
-      // [NAPRAWA #1] Zaplanuj cleanup z weryfikacją instancji
-      setTimeout(() => {
-        stopSceneSafe(sceneId, instanceId);
-      }, CONFIG.fadeOutTime * 1000 * 3);
-      
-      state.architect.scene.active = null;
-      markStateChanged();
-      showStatus('Przestrzeń wyłączona');
-    }
-
-    function toggleSceneExpanded(sceneId) {
-      state.architect.scene.expanded[sceneId] = !state.architect.scene.expanded[sceneId];
-      markStateChanged();
-    }
-
-    /**
-     * [NAPRAWA #1 & #2] Bezpieczne włączanie/wyłączanie obiektów
-     * 
-     * Rozwiązuje dwa problemy:
-     * 1. Race condition przy szybkim klikaniu
-     * 2. Brak walidacji po async loadBuffer()
-     */
-    async function toggleObject(objectId, enabled) {
-      const obj = CONFIG.objects.find(o => o.id === objectId);
-      const objState = state.architect.objects[objectId];
-      if (!obj || !objState) return;
-      
-      // [NAPRAWA #2] Jeśli trwa ładowanie, ignoruj
-      if (objState.isLoading) {
-        console.log(`[Loading Guard] Object ${objectId} is still loading, ignoring toggle`);
-        return;
-      }
-      
-      // Zapisz zamierzony stan PRZED operacją async
-      objState.enabled = enabled;
-      markStateChanged();
-      
-      if (enabled) {
-        showStatus(`Dodaję: ${obj.name}...`);
-        
-        // [NAPRAWA #1] Generuj nowy ID instancji
-        const newInstanceId = generateInstanceId();
-        objState.instanceId = newInstanceId;
-        objState.isLoading = true;
-        
-        // Ładuj bufor jeśli nie istnieje
-        if (!objState.buffer) {
-          objState.buffer = await loadAudioBuffer(obj.file, obj.fallback);
-        }
-        
-        objState.isLoading = false;
-        
-        // [NAPRAWA #2] STATE GUARD - sprawdź czy użytkownik nie zmienił zdania
-        if (!objState.enabled || objState.instanceId !== newInstanceId) {
-          console.log(`[State Guard] User changed mind during load for ${objectId}`);
-          return;
-        }
-        
-        if (!objState.buffer) {
-          showStatus(`Nie mogę odnaleźć tego dźwięku`, 3000);
-          objState.enabled = false;
-          objState.instanceId = null;
-          markStateChanged();
-          return;
-        }
-        
-        const source = state.audioContext.createBufferSource();
-        source.buffer = objState.buffer;
-        source.loop = true;
-        source.connect(objState.gainNode);
-        
-        objState.gainNode.gain.setValueAtTime(0, state.audioContext.currentTime);
-        objState.gainNode.gain.setTargetAtTime(objState.volume, state.audioContext.currentTime, CONFIG.fadeInTime);
-        
-        source.start();
-        objState.source = source;
-        
-        showStatus(`${obj.icon} ${obj.name}`);
-      } else {
-        // Wyłączanie
-        const instanceIdToStop = objState.instanceId;
-        
-        if (objState.source) {
-          objState.gainNode.gain.setTargetAtTime(0, state.audioContext.currentTime, CONFIG.fadeOutTime);
-          
-          // [NAPRAWA #1] Zaplanuj cleanup z weryfikacją instancji
-          const sourceToStop = objState.source;
-          setTimeout(() => {
-            // Weryfikuj czy to wciąż ta sama instancja
-            if (objState.instanceId === instanceIdToStop || objState.instanceId === null) {
-              try {
-                sourceToStop.stop();
-                sourceToStop.disconnect();
-              } catch (e) {
-                // Source już zatrzymany
-              }
-              
-              // Wyczyść tylko jeśli to ta sama instancja
-              if (objState.source === sourceToStop) {
-                objState.source = null;
-              }
-            }
-          }, CONFIG.fadeOutTime * 1000 * 3);
-        }
-        
-        objState.instanceId = null;
-      }
-      
-      markStateChanged();
-    }
-
-    function updateObjectVolume(objectId, volume) {
-      const objState = state.architect.objects[objectId];
-      if (objState) {
-        objState.volume = volume;
-        if (objState.gainNode && objState.enabled) {
-          objState.gainNode.gain.setTargetAtTime(volume, state.audioContext.currentTime, 0.1);
-        }
-      }
-      markStateChanged();
-    }
-
-    /**
-     * [NAPRAWA #4] Płynna zmiana pozycji obiektu
-     */
-    function updateObjectPosition(objectId, position) {
-      const objState = state.architect.objects[objectId];
-      const pos = CONFIG.hrtfPositions[position];
-      if (!objState || !pos || !objState.pannerNode) return;
-      
-      const currentTime = state.audioContext?.currentTime || 0;
-      const smoothingTime = CONFIG.positionSmoothingTime;
-      
-      // [NAPRAWA #4] Płynne przejście logarytmiczne
-      objState.pannerNode.positionX.setTargetAtTime(pos.x, currentTime, smoothingTime);
-      objState.pannerNode.positionY.setTargetAtTime(0, currentTime, smoothingTime);
-      objState.pannerNode.positionZ.setTargetAtTime(pos.z, currentTime, smoothingTime);
-      
-      objState.position = position;
-      markStateChanged();
-    }
-
-    function stopAllSpace() {
-      // Stop scene
-      if (state.architect.scene.active) {
-        stopScene(state.architect.scene.active);
-      }
-      
-      // Stop all objects
-      CONFIG.objects.forEach(obj => {
-        if (state.architect.objects[obj.id].enabled) {
-          toggleObject(obj.id, false);
-        }
-      });
-      
-      // Stop timer
-      if (state.architect.timer.isRunning) {
-        stopTimer();
-      }
-      
-      showStatus('Przestrzeń zatrzymana');
-    }
-
-    // ========================================
-    // TIMER FUNCTIONS
-    // ========================================
-    function startTimer(minutes) {
-      if (state.architect.timer.isRunning) {
-        stopTimer();
-      }
-      
-      state.architect.timer.duration = minutes * 60;
-      state.architect.timer.remaining = state.architect.timer.duration;
-      state.architect.timer.isRunning = true;
-      
-      playTimerSound(state.architect.timer.startSoundBuffer);
-      
-      updateTimerDisplay();
-      showStatus(`Timer przestrzeni: ${minutes} minut`);
-      
-      document.getElementById('btnTimerStart').style.display = 'none';
-      document.getElementById('btnTimerStop').style.display = 'inline-block';
-      document.getElementById('btnTimerStop').classList.add('active');
-      document.getElementById('timerDisplay').classList.add('active');
-      
-      state.architect.timer.intervalId = setInterval(() => {
-        state.architect.timer.remaining--;
-        updateTimerDisplay();
-        
-        if (state.architect.timer.remaining <= 0) {
-          timerFinished();
-        }
-      }, 1000);
-      
-      markStateChanged();
-    }
-
-    function stopTimer() {
-      if (state.architect.timer.intervalId) {
-        clearInterval(state.architect.timer.intervalId);
-        state.architect.timer.intervalId = null;
-      }
-      
-      state.architect.timer.isRunning = false;
-      state.architect.timer.remaining = 0;
-      
-      updateTimerDisplay();
-      
-      document.getElementById('btnTimerStart').style.display = 'inline-block';
-      document.getElementById('btnTimerStop').style.display = 'none';
-      document.getElementById('btnTimerStop').classList.remove('active');
-      document.getElementById('timerDisplay').classList.remove('active');
-      
-      document.querySelectorAll('.btn-timer-preset').forEach(btn => {
-        btn.classList.remove('active');
-      });
-      state.architect.timer.selectedPreset = null;
-      
-      markStateChanged();
-    }
-
-    function timerFinished() {
-      stopTimer();
-      
-      playTimerSound(state.architect.timer.endSoundBuffer);
-      
-      showStatus('⏰ Czas przestrzeni dobiegł końca', 4000);
-      
-      // Zatrzymaj wszystkie dźwięki przestrzeni
-      stopAllSpace();
-    }
-
-    function updateTimerDisplay() {
-      const display = document.getElementById('timerDisplay');
-      if (state.architect.timer.isRunning) {
-        display.textContent = formatTime(state.architect.timer.remaining);
-      } else {
-        display.textContent = '--:--';
-      }
-    }
-
-    // ========================================
-    // UI RENDERING
-    // ========================================
-    
-    /**
-     * [NAPRAWA #5] Centralna funkcja synchronizacji UI ze stanem
-     * 
-     * Wywoływana reaktywnie po każdej zmianie stanu.
-     * Zapewnia że UI zawsze odzwierciedla aktualny stan silnika audio.
-     */
-    function syncAllUI() {
-      syncSceneUI();
-      syncObjectsUI();
-      syncMeditationUI();
-    }
-    
-    function syncSceneUI() {
-      document.querySelectorAll('.scene-item').forEach(item => {
-        const sceneId = item.dataset.scene;
-        const isSelected = sceneId === state.architect.scene.active;
-        const isExpanded = state.architect.scene.expanded[sceneId];
-        
-        item.classList.toggle('selected', isSelected);
-        item.classList.toggle('expanded', isExpanded);
-      });
-    }
-    
-    function syncObjectsUI() {
-      CONFIG.objects.forEach(obj => {
-        // [OPTIMIZATION] Use cached DOM element
-        const item = state.uiCache.objects[obj.id] || document.querySelector(`.object-item[data-object="${obj.id}"]`);
-        if (!item) return;
-        
-        const objState = state.architect.objects[obj.id];
-        item.classList.toggle('enabled', objState.enabled);
-        item.classList.toggle('disabled', !objState.enabled);
-        
-        const checkbox = item.querySelector('.object-checkbox');
-        if (checkbox) {
-          checkbox.classList.toggle('checked', objState.enabled);
-          checkbox.setAttribute('aria-checked', objState.enabled);
-        }
-        
-        // Synchronizuj pozycję
-        const positionContainer = item.querySelector('.object-position');
-        if (positionContainer) {
-          positionContainer.querySelectorAll('.btn-position').forEach(btn => {
-            btn.classList.toggle('selected', btn.dataset.pos === objState.position);
-          });
-        }
-      });
-    }
-    
-    function syncMeditationUI() {
-      // Synchronizacja przycisków pozycji
-      document.getElementById('voicePosition')?.querySelectorAll('.btn-position').forEach(btn => {
-        btn.classList.toggle('selected', btn.dataset.pos === state.meditation.position);
-      });
-      
-      // Synchronizacja toggle HRTF
-      const hrtfToggle = document.getElementById('hrtfToggle');
-      if (hrtfToggle) {
-        hrtfToggle.classList.toggle('active', state.meditation.hrtfEnabled);
-        hrtfToggle.setAttribute('aria-checked', state.meditation.hrtfEnabled);
-      }
-      
-      // Synchronizacja toggle sync
-      const syncToggle = document.getElementById('syncToggle');
-      if (syncToggle) {
-        syncToggle.classList.toggle('active', state.meditation.syncWithSpace);
-        syncToggle.setAttribute('aria-checked', state.meditation.syncWithSpace);
-      }
-    }
-
-    function renderSessionCards() {
-      const container = document.getElementById('sessionCards');
-      container.innerHTML = CONFIG.sessions.map(session => `
-        <div class="session-card ${state.meditation.selected === session.id ? 'selected' : ''}" 
-             data-session="${session.id}"
-             role="button"
-             tabindex="0"
-             aria-pressed="${state.meditation.selected === session.id}"
-             aria-label="${session.name}: ${session.description}">
-          <span class="session-icon">${session.icon}</span>
-          <span class="session-name">${session.name}</span>
-        </div>
-      `).join('');
-      
-      container.querySelectorAll('.session-card').forEach(card => {
-        const handleSelect = async () => {
-          const sessionId = card.dataset.session;
-          if (sessionId === state.meditation.selected) return;
-          
-          stopMeditation();
-          state.meditation.selected = sessionId;
-          
-          container.querySelectorAll('.session-card').forEach(c => {
-            c.classList.remove('selected');
-            c.setAttribute('aria-pressed', 'false');
-          });
-          card.classList.add('selected');
-          card.setAttribute('aria-pressed', 'true');
-          
-          const session = CONFIG.sessions.find(s => s.id === sessionId);
-          document.getElementById('meditationTitle').textContent = session.name;
-          
-          await loadMeditationSession(sessionId);
-        };
-        
-        card.addEventListener('click', handleSelect);
-        card.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            handleSelect();
-          }
-        });
-      });
-    }
-
-    function renderSceneList() {
-      const container = document.getElementById('sceneList');
-      container.innerHTML = CONFIG.scenes.map(scene => {
-        const volume = Math.round((state.architect.scene.volumes[scene.id] ?? 0.5) * 100);
-        const isExpanded = state.architect.scene.expanded[scene.id];
-        const isSelected = state.architect.scene.active === scene.id;
-        
-        return `
-          <div class="scene-item ${isSelected ? 'selected' : ''} ${isExpanded ? 'expanded' : ''}" 
-               data-scene="${scene.id}">
-            <div class="scene-header" data-scene-header="${scene.id}">
-              <div class="scene-radio" aria-hidden="true"></div>
-              <span class="scene-icon">${scene.icon}</span>
-              <span class="scene-name">${scene.name}</span>
-              <span class="scene-expand-icon">▼</span>
-            </div>
-            <div class="scene-details">
-              <div class="scene-volume-control">
-                <span class="scene-volume-label">Głośność:</span>
-                <div class="range-wrapper">
-                  <div class="range-fill scene-range-fill-${scene.id}"></div>
-                  <input type="range" min="0" max="100" value="${volume}" 
-                         data-scene-volume="${scene.id}"
-                         aria-label="Głośność: ${scene.name}">
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-      
-      container.querySelectorAll('.scene-header').forEach(header => {
-        header.addEventListener('click', (e) => {
-          const sceneId = header.dataset.sceneHeader;
-          
-          if (state.architect.scene.active === sceneId) {
-            stopScene(sceneId);
-          } else {
-            selectScene(sceneId);
-          }
-          
-          toggleSceneExpanded(sceneId);
-        });
-      });
-      
-      container.querySelectorAll('[data-scene-volume]').forEach(input => {
-        const sceneId = input.dataset.sceneVolume;
-        const fillEl = container.querySelector(`.scene-range-fill-${sceneId}`);
-        
-        updateRangeFill(input, fillEl);
-        
-        input.addEventListener('input', (e) => {
-          const volume = e.target.value / 100;
-          updateSceneVolume(sceneId, volume);
-          updateRangeFill(input, fillEl);
-        });
-      });
-    }
-
-    function updateSceneUI() {
-      syncSceneUI();
-    }
-
-    function renderObjectsList() {
-      const container = document.getElementById('objectsList');
-      container.innerHTML = CONFIG.objects.map(obj => {
-        const objState = state.architect.objects[obj.id];
-        const volume = Math.round(objState.volume * 100);
-        
-        return `
-          <div class="object-item ${objState.enabled ? 'enabled' : 'disabled'}" 
-               data-object="${obj.id}">
-            <div class="object-header">
-              <div class="object-checkbox ${objState.enabled ? 'checked' : ''}" 
-                   data-object-toggle="${obj.id}"
-                   role="checkbox"
-                   tabindex="0"
-                   aria-checked="${objState.enabled}"
-                   aria-label="${obj.name}: ${obj.description}"></div>
-              <span class="object-icon">${obj.icon}</span>
-              <span class="object-name">${obj.name}</span>
-            </div>
-            <div class="object-controls">
-              <div class="object-position" data-object-position="${obj.id}" role="group" aria-label="Pozycja: ${obj.name}">
-                <button class="btn-position ${objState.position === 'left' ? 'selected' : ''}" 
-                        data-pos="left" aria-label="Lewa strona">◀</button>
-                <button class="btn-position ${objState.position === 'center' ? 'selected' : ''}" 
-                        data-pos="center" aria-label="Środek">●</button>
-                <button class="btn-position ${objState.position === 'right' ? 'selected' : ''}" 
-                        data-pos="right" aria-label="Prawa strona">▶</button>
-              </div>
-              <div class="range-wrapper object-volume">
-                <div class="range-fill object-range-fill-${obj.id}"></div>
-                <input type="range" min="0" max="100" value="${volume}" 
-                       data-object-volume="${obj.id}"
-                       aria-label="Głośność: ${obj.name}">
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-      
-      container.querySelectorAll('.object-checkbox').forEach(checkbox => {
-        const handleToggle = () => {
-          const objectId = checkbox.dataset.objectToggle;
-          const newState = !state.architect.objects[objectId].enabled;
-          toggleObject(objectId, newState);
-        };
-        
-        checkbox.addEventListener('click', handleToggle);
-        checkbox.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            handleToggle();
-          }
-        });
-      });
-      
-      container.querySelectorAll('.object-position').forEach(posContainer => {
-        posContainer.querySelectorAll('.btn-position').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const objectId = posContainer.dataset.objectPosition;
-            const position = btn.dataset.pos;
-            updateObjectPosition(objectId, position);
-          });
-        });
-      });
-      
-      container.querySelectorAll('[data-object-volume]').forEach(input => {
-        const objectId = input.dataset.objectVolume;
-        const fillEl = container.querySelector(`.object-range-fill-${objectId}`);
-        
-        updateRangeFill(input, fillEl);
-        
-        input.addEventListener('input', (e) => {
-          const volume = e.target.value / 100;
-          updateObjectVolume(objectId, volume);
-          updateRangeFill(input, fillEl);
-        });
-      });
-
-      // [OPTIMIZATION] Populate DOM cache
-      CONFIG.objects.forEach(obj => {
-        state.uiCache.objects[obj.id] = container.querySelector(`.object-item[data-object="${obj.id}"]`);
-      });
-    }
-
-    function updateObjectUI(objectId) {
-      syncObjectsUI();
-    }
-
-    // ========================================
-    // EVENT HANDLERS
-    // ========================================
-    function setupEventHandlers() {
-      // Start button
-      document.getElementById('btnStart').addEventListener('click', async () => {
-        await initAudioContext();
-        document.getElementById('audioPrompt').classList.add('hidden');
-        
-        const firstSession = CONFIG.sessions[0];
-        document.getElementById('meditationTitle').textContent = firstSession.name;
-        await loadMeditationSession(firstSession.id);
-      });
-      
-      // Play/Pause
-      document.getElementById('btnPlay').addEventListener('click', () => {
-        if (state.meditation.isPlaying) {
-          pauseMeditation();
-        } else {
-          playMeditation();
-        }
-      });
-      
-      // Stop
-      document.getElementById('btnStop').addEventListener('click', stopMeditation);
-      
-      // Master volume
-      const masterVolume = document.getElementById('masterVolume');
-      const masterVolumeFill = document.getElementById('masterVolumeFill');
-      updateRangeFill(masterVolume, masterVolumeFill);
-      
-      masterVolume.addEventListener('input', (e) => {
-        state.masterVolume = e.target.value / 100;
-        updateRangeFill(masterVolume, masterVolumeFill);
-        if (state.masterGain) {
-          state.masterGain.gain.setTargetAtTime(state.masterVolume, state.audioContext.currentTime, 0.1);
-        }
-      });
-      
-      // Voice volume
-      const voiceVolume = document.getElementById('voiceVolume');
-      const voiceVolumeFill = document.getElementById('voiceVolumeFill');
-      updateRangeFill(voiceVolume, voiceVolumeFill);
-      
-      voiceVolume.addEventListener('input', (e) => {
-        state.meditation.volume = e.target.value / 100;
-        document.getElementById('voiceVolumeValue').textContent = `${e.target.value}%`;
-        updateRangeFill(voiceVolume, voiceVolumeFill);
-        if (state.meditation.gainNode) {
-          state.meditation.gainNode.gain.setTargetAtTime(state.meditation.volume, state.audioContext.currentTime, 0.1);
-        }
-      });
-      
-      // HRTF toggle
-      const hrtfToggle = document.getElementById('hrtfToggle');
-      
-      hrtfToggle.addEventListener('click', () => {
-        const enabled = !hrtfToggle.classList.contains('active');
-        toggleHRTF(enabled);
-      });
-      
-      hrtfToggle.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          hrtfToggle.click();
-        }
-      });
-      
-      // Voice position
-      document.getElementById('voicePosition').querySelectorAll('.btn-position').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const position = btn.dataset.pos;
-          updateMeditationPosition(position);
-        });
-      });
-      
-      // Sync toggle
-      const syncToggle = document.getElementById('syncToggle');
-      
-      syncToggle.addEventListener('click', () => {
-        const enabled = !syncToggle.classList.contains('active');
-        state.meditation.syncWithSpace = enabled;
-        markStateChanged();
-        
-        if (enabled) {
-          showStatus('Przestrzeń zakończy się z końcem medytacji');
-        } else {
-          showStatus('Przestrzeń działa niezależnie');
-        }
-      });
-      
-      syncToggle.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          syncToggle.click();
-        }
-      });
-      
-      // Progress bar seek
-      document.getElementById('progressBar').addEventListener('click', (e) => {
-        if (!state.meditation.buffer) return;
-        
-        const rect = e.currentTarget.getBoundingClientRect();
-        const progress = (e.clientX - rect.left) / rect.width;
-        const seekTime = progress * state.meditation.duration;
-        
-        const wasPlaying = state.meditation.isPlaying;
-        stopMeditation();
-        state.meditation.pauseTime = seekTime;
-        state.meditation.isPaused = true;
-        
-        updateProgressBar(progress);
-        document.getElementById('currentTime').textContent = formatTime(seekTime);
-        
-        if (wasPlaying) {
-          playMeditation();
-        }
-      });
-      
-      // Architect panel expand/collapse
-      document.getElementById('architectHeader').addEventListener('click', () => {
-        const panel = document.getElementById('architectPanel');
-        state.architect.isExpanded = !state.architect.isExpanded;
-        panel.classList.toggle('expanded', state.architect.isExpanded);
-      });
-      
-      // Timer presets
-      document.querySelectorAll('.btn-timer-preset').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const minutes = parseInt(btn.dataset.minutes);
-          
-          document.querySelectorAll('.btn-timer-preset').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          
-          state.architect.timer.selectedPreset = minutes;
-        });
-      });
-      
-      // Timer start
-      document.getElementById('btnTimerStart').addEventListener('click', () => {
-        if (state.architect.timer.selectedPreset) {
-          startTimer(state.architect.timer.selectedPreset);
-        } else {
-          showStatus('Wybierz najpierw czas');
-        }
-      });
-      
-      // Timer stop
-      document.getElementById('btnTimerStop').addEventListener('click', () => {
-        stopTimer();
-      });
-    }
-
-    // ========================================
-    // INITIALIZATION
-    // ========================================
-    function init() {
-      CONFIG.scenes.forEach(scene => {
-        state.architect.scene.volumes[scene.id] = 0.5;
-        state.architect.scene.expanded[scene.id] = false;
-        state.architect.scene.instanceIds[scene.id] = null;
-      });
-      
-      renderSessionCards();
-      renderSceneList();
-      renderObjectsList();
-      setupEventHandlers();
-      
-      console.log('🎧 Przestrzeń relaksu — zainicjalizowana');
-      console.log('📁 Ścieżki audio: assets/audio/{voice,scenes,objects,timer}/*.webm (z fallbackiem .mp3)');
-      console.log('🔧 Naprawiono: Race conditions, async validation, WebM format, smooth panning, UI sync');
-    }
-
-    document.addEventListener('DOMContentLoaded', init);
-  </script>
+  <!-- JavaScript -->
+  <script src="script.js"></script>
 </body>
 </html>
