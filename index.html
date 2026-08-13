@@ -66,12 +66,15 @@
 
     <!-- HEADER minimalny (manifest sekcja 08) -->
     <header class="header">
-      <div class="logo">
-        <span class="logo-text">Przestrzeń Relaksu</span>
-        <span class="audio-ctx-status" id="audioCtxStatus">
-          <span class="audio-ctx-dot" aria-hidden="true"></span>
-          <span>Audio context: <span class="audio-ctx-label">Idle</span></span>
-        </span>
+      <div class="header-left">
+        <a class="btn-hub" href="/" aria-label="Powrót do Huba Spatial Audio Lab" title="Powrót do Huba">← <span class="btn-hub-label">Hub</span></a>
+        <div class="logo">
+          <span class="logo-text">Przestrzeń Relaksu</span>
+          <span class="audio-ctx-status" id="audioCtxStatus">
+            <span class="audio-ctx-dot" aria-hidden="true"></span>
+            <span><span class="audio-ctx-prefix">Audio context: </span><span class="audio-ctx-label">Idle</span></span>
+          </span>
+        </div>
       </div>
       <div class="header-controls">
         <div class="global-controls">
@@ -134,6 +137,18 @@
         <!-- Pusty stan -->
         <p class="hint-text hidden-layer" id="libraryEmpty">Brak medytacji w bibliotece. Dodaj pliki i wpisy w manifest.json.</p>
       </section>
+
+      <!-- STOPKA: oznakowanie KPO / UE (manifest sekcja 13) -->
+      <footer class="app-footer">
+        <button type="button" class="btn-about" id="btnAbout" aria-haspopup="dialog" aria-controls="aboutModal">O projekcie</button>
+        <p class="app-footer-note">
+          Sfinansowano ze środków Krajowego Planu Odbudowy i Zwiększania Odporności.<br>
+          Umowa nr <span class="app-footer-code">143/KPO.STYPENDIA/NIMIT/2025</span>
+        </p>
+        <div class="kpo-banner">
+          <img src="assets/kpo-belka.jpg" alt="Logotyp Krajowy Plan Odbudowy, flaga Rzeczpospolitej Polskiej, napis „Sfinansowane przez Unię Europejską NextGenerationEU” oraz flaga Unii Europejskiej">
+        </div>
+      </footer>
     </main>
 
     <!-- ==================== STREFA: MIKSER TŁA ==================== -->
@@ -330,6 +345,60 @@
       <div class="timer-controls">
         <button class="btn-timer-action" id="btnTimerStart">Uruchom timer</button>
         <button class="btn-timer-action" id="btnTimerStop" style="display:none;">Zatrzymaj</button>
+      </div>
+    </div>
+
+    <!-- Modal „O projekcie" (manifest sekcja 13: oznakowanie KPO/UE w każdej aplikacji) -->
+    <div class="about-modal" id="aboutModal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle" aria-hidden="true">
+      <div class="about-modal-header">
+        <h2 class="about-modal-title" id="aboutTitle">O projekcie</h2>
+        <button type="button" class="btn-close-about" id="btnCloseAbout" aria-label="Zamknij">✕</button>
+      </div>
+
+      <div class="about-modal-body">
+        <p class="about-lead">
+          <b>Przestrzeń Relaksu</b> to binauralny mikser relaksacyjny: prowadzone medytacje
+          głosowe łączone na żywo z krajobrazami dźwiękowymi i punktowymi źródłami audio
+          rozstawionymi wokół słuchacza w trzech wymiarach.
+        </p>
+
+        <h3 class="about-subhead">Jak to działa</h3>
+        <p class="about-text">
+          Dźwięk jest przetwarzany w przeglądarce przez Web Audio API. Obiekty tła używają
+          filtracji HRTF (przestrzenna lokalizacja źródła), a głos prowadzącego panoramowania
+          equalpower — dzięki temu barwa mowy pozostaje niezmieniona. Efekt przestrzenny
+          słychać wyłącznie na słuchawkach.
+        </p>
+
+        <h3 class="about-subhead">Realizacja</h3>
+        <dl class="about-meta">
+          <div class="about-meta-row">
+            <dt>Autor</dt>
+            <dd>Oskar Hamerski · Spatial Audio Lab</dd>
+          </div>
+          <div class="about-meta-row">
+            <dt>Program</dt>
+            <dd>Krajowy Plan Odbudowy — stypendia NIMIT</dd>
+          </div>
+          <div class="about-meta-row">
+            <dt>Umowa</dt>
+            <dd>143/KPO.STYPENDIA/NIMIT/2025</dd>
+          </div>
+          <div class="about-meta-row">
+            <dt>Technologia</dt>
+            <dd>Web Audio API · HRTF · WebM/Opus</dd>
+          </div>
+        </dl>
+
+        <p class="about-text">
+          Zadanie finansowane ze środków Krajowego Planu Odbudowy i Zwiększania Odporności
+          w ramach inwestycji A2.5.1.
+        </p>
+
+        <!-- Moduł logotypów — zawsze na białym tle (manifest sekcja 13) -->
+        <div class="kpo-banner">
+          <img src="assets/kpo-belka.jpg" alt="Logotyp Krajowy Plan Odbudowy, flaga Rzeczpospolitej Polskiej, napis „Sfinansowane przez Unię Europejską NextGenerationEU” oraz flaga Unii Europejskiej">
+        </div>
       </div>
     </div>
 

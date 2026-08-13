@@ -2292,6 +2292,10 @@ function setupEventHandlers() {
   
   document.getElementById('btnTimerStop')?.addEventListener('click', stopTimer);
 
+  // Modal „O projekcie" (oznakowanie KPO/UE — manifest sekcja 13)
+  document.getElementById('btnAbout')?.addEventListener('click', openAboutModal);
+  document.getElementById('btnCloseAbout')?.addEventListener('click', closeAboutModal);
+
   // === Dostępność klawiatury: aktywacja kart Enter/Spacja + Escape zamyka nakładki ===
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
@@ -2317,6 +2321,10 @@ function setupEventHandlers() {
     }
 
     if (e.key === 'Escape') {
+      if (document.getElementById('aboutModal')?.classList.contains('visible')) {
+        closeAboutModal();
+        return;
+      }
       if (document.getElementById('radarOverlay')?.classList.contains('visible')) {
         closeRadarOverlay();
         return;
@@ -2392,6 +2400,39 @@ function attachSwipeDownToClose(sheetEl, handleEl, onClose) {
 
 
 // ================================================================
+// === SEKCJA: MODAL „O PROJEKCIE" (oznakowanie KPO/UE) ===
+// ================================================================
+
+// Element, do którego wraca fokus po zamknięciu modalu.
+let aboutReturnFocus = null;
+
+function openAboutModal() {
+  const modal = document.getElementById('aboutModal');
+  if (!modal) return;
+
+  aboutReturnFocus = document.activeElement;
+  modal.classList.add('visible');
+  modal.setAttribute('aria-hidden', 'false');
+  modal.querySelector('.about-modal-body')?.scrollTo(0, 0);
+  document.getElementById('btnCloseAbout')?.focus();
+}
+
+function closeAboutModal() {
+  const modal = document.getElementById('aboutModal');
+  if (!modal) return;
+
+  modal.classList.remove('visible');
+  modal.setAttribute('aria-hidden', 'true');
+
+  // Fokus wraca tam, skąd modal został otwarty (wymóg dostępności dla dialogów)
+  if (aboutReturnFocus && typeof aboutReturnFocus.focus === 'function') {
+    aboutReturnFocus.focus();
+  }
+  aboutReturnFocus = null;
+}
+
+
+// ================================================================
 // === SEKCJA: MANIFEST / BIBLIOTEKA ===
 // ================================================================
 
@@ -2420,14 +2461,22 @@ async function loadManifest() {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
 
-    CONFIG.sessions = (data.meditations || []).map(mapEntry);
+    // Wpisy oznaczone "_demo": true to zaślepki nawigacyjne wskazujące plik innej
+    // medytacji — nigdy nie renderujemy ich odbiorcy. Zostają w manifeście jako szablon
+    // do podmiany; grupy, które przez to zostaną puste, odpadają same w buildLibraryTree().
+    const allMeditations = data.meditations || [];
+    const realMeditations = allMeditations.filter(m => m._demo !== true);
+    const skippedDemo = allMeditations.length - realMeditations.length;
+
+    CONFIG.sessions = realMeditations.map(mapEntry);
     CONFIG.scenes   = (data.ambient || []).map(mapEntry);
     CONFIG.objects  = (data.objects || []).map(mapEntry);
     CONFIG.meditationGroups = data.meditationGroups || [];
 
     console.log(
       `📚 Manifest: ${CONFIG.sessions.length} medytacji, ` +
-      `${CONFIG.scenes.length} scen, ${CONFIG.objects.length} obiektów`
+      `${CONFIG.scenes.length} scen, ${CONFIG.objects.length} obiektów` +
+      (skippedDemo ? ` (pominięto ${skippedDemo} wpisów demo)` : '')
     );
   } catch (err) {
     console.error('Nie udało się załadować manifest.json:', err);
