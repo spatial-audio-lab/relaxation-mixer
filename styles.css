@@ -497,16 +497,14 @@ body {
 }
 
 /* ========================================
-   ODTWARZACZ — karta (glass-card → panel płaski)
+   ODTWARZACZ — karta (płaski panel; dawna klasa .glass-card po estetyce
+   glassmorphism usunięta wraz z nią — nazwa opisywała nieistniejący styl)
    ======================================== */
-.glass-card {
+.player-card {
   background: transparent;
   border: none;
   padding: 0;
   margin-bottom: 0;
-}
-
-.player-card {
   text-align: left;
 }
 
@@ -544,18 +542,24 @@ body {
   display: none;
 }
 
+/* Transport: zwarty blok wyśrodkowany, nie pas na całą szerokość.
+   Wcześniej przycisk odtwarzania rozciągał się na całą kartę i sam w sobie
+   był największą płaszczyzną koloru w aplikacji — dominował treść, którą
+   ma tylko uruchamiać. Teraz kwadrat 76 px z mniejszymi kontrolkami obok. */
 .player-controls {
   display: flex;
   align-items: stretch;
   gap: 1px;
   background: var(--border2);
   border: 1px solid var(--border2);
-  margin: 18px var(--space-md) 0;
-  height: 64px;
+  width: max-content;
+  max-width: calc(100% - 2 * var(--space-md));
+  margin: 22px auto 0;
+  height: 76px;
 }
 
 .btn-control {
-  width: 64px;
+  width: 52px;
   border: none;
   background: var(--black);
   color: var(--dim);
@@ -567,13 +571,22 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Skok o 15 s — liczba zamiast piktogramu: czytelna bez legendy
+   i mieści się w zamkniętym zestawie znaków manifestu. */
+.btn-seek {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
 .btn-play-main {
-  flex: 1;
+  width: 76px;
   border: none;
   background: var(--cyan);
   color: var(--black);
   font-family: var(--font-mono);
-  font-size: 16px;
+  font-size: 18px;
   letter-spacing: 0.1em;
   cursor: pointer;
   display: flex;
@@ -918,7 +931,7 @@ body {
   opacity: 0.6;
 }
 
-/* Wiersz dźwięku 3D: [⏻ toggle] [nazwa + meta] [⚙] */
+/* Wiersz dźwięku 3D: [WŁ/WYŁ] [nazwa + meta] [3D] */
 .sound-card {
   border-left-color: var(--border2);
 }
@@ -929,12 +942,15 @@ body {
 
 .sound-toggle {
   flex-shrink: 0;
-  width: 44px;
+  width: 52px;
   height: 44px;
   border: 1px solid var(--border2);
   background: transparent;
   color: var(--dim);
-  font-size: 13px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.06em;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -969,7 +985,10 @@ body {
   border: 1px solid var(--border2);
   background: transparent;
   color: var(--cream);
-  font-size: 13px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.06em;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -984,7 +1003,7 @@ body {
 
 .item-status,
 .equalizer {
-  display: none; /* zastąpione stanem koloru obwódki + ⏻; brak dublowania wskaźnika */
+  display: none; /* zastąpione stanem koloru obwódki + napisem WŁ/WYŁ; brak dublowania wskaźnika */
 }
 
 /* Podpowiedzi tekstowe */
@@ -1098,6 +1117,20 @@ body {
   font-size: 10px;
   color: var(--dim);
   margin-top: 5px;
+}
+
+/* Pasek postępu zapamiętanej sesji — pokazuje, że „Kontynuuj" naprawdę
+   kontynuuje. Cienki, bez animacji, w rytmie 1px siatki manifestu. */
+.continue-card-progress {
+  height: 2px;
+  margin-top: 8px;
+  background: var(--border2);
+}
+
+.continue-card-progress span {
+  display: block;
+  height: 100%;
+  background: var(--cyan);
 }
 
 .continue-card-play {
