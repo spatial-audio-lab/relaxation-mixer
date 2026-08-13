@@ -232,13 +232,69 @@ function setMixerTab(tabName) {
 }
 
 // ================================================================
+// === DOSTĘPNOŚĆ: PUŁAPKA FOKUSU DLA OKIEN MODALNYCH ===
+// ================================================================
+// `aria-modal="true"` to obietnica, że nie da się wyjść Tabem pod spód.
+// Sama deklaracja tego nie robi — trzeba zawrócić fokus ręcznie.
+
+const FOCUSABLE_SELECTOR = [
+  'a[href]', 'button:not([disabled])', 'input:not([disabled])',
+  'select:not([disabled])', 'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])'
+].join(', ');
+
+function focusableWithin(container) {
+  return Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR))
+    // offsetParent === null odsiewa elementy ukryte (display:none i przodkowie)
+    .filter(el => el.offsetParent !== null || el === document.activeElement);
+}
+
+// Zwraca otwarte okno modalne o najwyższym priorytecie (kolejność jak przy Escape).
+function activeModalContainer() {
+  const modals = ['aboutModal', 'radarOverlay'];
+  for (const id of modals) {
+    const el = document.getElementById(id);
+    if (el && el.classList.contains('visible')) return el;
+  }
+  return null;
+}
+
+function trapTabWithin(container, e) {
+  const items = focusableWithin(container);
+  if (!items.length) {
+    e.preventDefault();
+    return;
+  }
+
+  const first = items[0];
+  const last = items[items.length - 1];
+  const active = document.activeElement;
+  const outside = !container.contains(active);
+
+  if (e.shiftKey && (active === first || outside)) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && (active === last || outside)) {
+    e.preventDefault();
+    first.focus();
+  }
+}
+
+
+// ================================================================
 // === PEŁNOEKRANOWY RADAR 3D (otwierany na żądanie) ===
 // ================================================================
+
+// Element, do którego wraca fokus po zamknięciu radaru.
+let radarReturnFocus = null;
+
 function openRadarOverlay() {
   const overlay = document.getElementById('radarOverlay');
   if (!overlay) return;
+  radarReturnFocus = document.activeElement;
   overlay.classList.add('visible');
   overlay.setAttribute('aria-hidden', 'false');
+  document.getElementById('btnCloseRadar')?.focus();
   // Płótno potrzebuje realnych wymiarów dopiero po pokazaniu nakładki
   requestAnimationFrame(() => setTimeout(resizeCanvas, 30));
 }
@@ -248,6 +304,12 @@ function closeRadarOverlay() {
   if (!overlay || !overlay.classList.contains('visible')) return;
   overlay.classList.remove('visible');
   overlay.setAttribute('aria-hidden', 'true');
+
+  // Fokus wraca tam, skąd radar został otwarty — tak samo jak w modalu „O projekcie".
+  if (radarReturnFocus && typeof radarReturnFocus.focus === 'function') {
+    radarReturnFocus.focus();
+  }
+  radarReturnFocus = null;
 }
 
 function generateInstanceId() {
@@ -2399,10 +2461,36 @@ function setupEventHandlers() {
   document.getElementById('btnSeekForward')?.addEventListener('click', () => seekMeditationBy(15));
   
   // === Dolna nawigacja stref ===
-  document.getElementById('bottomNav')?.addEventListener('click', (e) => {
+  const bottomNav = document.getElementById('bottomNav');
+
+  bottomNav?.addEventListener('click', (e) => {
     const tab = e.target.closest('.nav-tab');
     if (!tab) return;
     switchView(tab.dataset.zone);
+  });
+
+  // Nawigacja strzałkami wewnątrz role="tablist" — wzorzec WAI-ARIA dla zakładek.
+  // Bez tego deklaracja role="tab"/"tablist" obiecuje czytnikowi ekranu zachowanie,
+  // którego aplikacja nie ma.
+  bottomNav?.addEventListener('keydown', (e) => {
+    const tabs = Array.from(bottomNav.querySelectorAll('.nav-tab'));
+    const index = tabs.indexOf(document.activeElement);
+    if (index === -1) return;
+
+    let target = null;
+    switch (e.key) {
+      case 'ArrowRight':
+      case 'ArrowDown': target = tabs[(index + 1) % tabs.length]; break;
+      case 'ArrowLeft':
+      case 'ArrowUp':   target = tabs[(index - 1 + tabs.length) % tabs.length]; break;
+      case 'Home':      target = tabs[0]; break;
+      case 'End':       target = tabs[tabs.length - 1]; break;
+      default: return;
+    }
+
+    e.preventDefault();
+    target.focus();
+    switchView(target.dataset.zone);
   });
 
   // === Biblioteka: poziom tematów (grupy) ===
@@ -2741,6 +2829,15 @@ function setupEventHandlers() {
         return;
       }
       return;
+    }
+
+    // Tab wewnątrz otwartego okna modalnego nigdy nie wychodzi pod spód.
+    if (e.key === 'Tab') {
+      const modal = activeModalContainer();
+      if (modal) {
+        trapTabWithin(modal, e);
+        return;
+      }
     }
 
     if (e.key === 'Escape') {
