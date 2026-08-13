@@ -509,6 +509,15 @@ async function loadMeditationSession(sessionId) {
     state.meditation.duration = state.meditation.buffer.duration;
     document.getElementById('totalTime').textContent = formatTime(state.meditation.duration);
     document.getElementById('meditationTitle').textContent = session.name;
+    const descEl = document.getElementById('meditationDesc');
+    if (descEl) descEl.textContent = session.description || '';
+    const metaEl = document.getElementById('meditationMeta');
+    if (metaEl) {
+      const parts = [];
+      if (session.author) parts.push(session.author);
+      if (session.duration) parts.push(session.duration);
+      metaEl.textContent = parts.join(' · ');
+    }
     showStatus(`${session.name} — gotowe`);
   } else {
     showStatus('Nie mogę załadować sesji', 3000);
@@ -1190,12 +1199,16 @@ function groupTitle(groupId) {
   return libraryTree.get(groupId)?.title || groupId;
 }
 
-// Polska odmiana: 1 sesja / 2-4 sesje / 5+ sesji
-function sessionsLabel(n) {
+// Polska odmiana: 1 forma / 2-4 forma / 5+ forma
+function pluralPL(n, [one, few, many]) {
   const last = n % 10, last2 = n % 100;
-  if (n === 1) return '1 sesja';
-  if (last >= 2 && last <= 4 && !(last2 >= 12 && last2 <= 14)) return `${n} sesje`;
-  return `${n} sesji`;
+  if (n === 1) return `1 ${one}`;
+  if (last >= 2 && last <= 4 && !(last2 >= 12 && last2 <= 14)) return `${n} ${few}`;
+  return `${n} ${many}`;
+}
+
+function sessionsLabel(n) {
+  return pluralPL(n, ['sesja', 'sesje', 'sesji']);
 }
 
 function renderLibraryGroups() {
@@ -1266,6 +1279,9 @@ function showLibraryLevel(level, groupId = null, subgroupId = null) {
   const filesEl = document.getElementById('libraryFiles');
   const navEl = document.getElementById('libraryNav');
   const headerEl = document.getElementById('librarySectionHeader');
+  const titleEl = document.getElementById('librarySectionTitle');
+  const subtitleEl = document.getElementById('librarySectionSubtitle');
+  const countEl = document.getElementById('librarySectionCount');
   const continueEl = document.getElementById('continueSection');
   const emptyEl = document.getElementById('libraryEmpty');
   const bc = document.getElementById('libraryBreadcrumb');
@@ -1276,7 +1292,8 @@ function showLibraryLevel(level, groupId = null, subgroupId = null) {
   subsEl?.classList.toggle('hidden-layer', level !== 'subgroups');
   filesEl?.classList.toggle('hidden-layer', level !== 'files');
   navEl?.classList.toggle('hidden-layer', level === 'groups');
-  headerEl?.classList.toggle('hidden-layer', level !== 'groups');
+  // Nagłówek sekcji zostaje widoczny na każdym poziomie — zmienia się tylko jego treść (README sekcja 3.4)
+  headerEl?.classList.toggle('hidden-layer', level === 'groups' && isEmpty);
   emptyEl?.classList.toggle('hidden-layer', !(level === 'groups' && isEmpty));
 
   // "Kontynuuj" — renderContinueSection sam respektuje poziom (tylko 'groups')
@@ -1284,9 +1301,17 @@ function showLibraryLevel(level, groupId = null, subgroupId = null) {
 
   if (level === 'groups') {
     renderLibraryGroups();
+    if (titleEl) titleEl.textContent = 'Medytacje';
+    if (subtitleEl) subtitleEl.textContent = 'Wybierz temat';
+    if (countEl) countEl.textContent = pluralPL(libraryTree.size, ['temat', 'tematy', 'tematów']);
   } else if (level === 'subgroups') {
     renderLibrarySubgroups(groupId);
     if (bc) bc.innerHTML = `<span class="crumb-current">${groupTitle(groupId)}</span>`;
+    const node = libraryTree.get(groupId);
+    const tileCount = node ? (node.direct.length > 0 ? 1 : 0) + node.subgroups.size : 0;
+    if (titleEl) titleEl.textContent = groupTitle(groupId);
+    if (subtitleEl) subtitleEl.textContent = 'Wybierz podtemat';
+    if (countEl) countEl.textContent = pluralPL(tileCount, ['podtemat', 'podtematy', 'podtematów']);
   } else if (level === 'files') {
     renderLibraryFiles(groupId, subgroupId);
     const parts = [groupTitle(groupId)];
@@ -1298,6 +1323,11 @@ function showLibraryLevel(level, groupId = null, subgroupId = null) {
           : `${p}<span class="crumb-sep">/</span>`
       ).join('');
     }
+    const node = libraryTree.get(groupId);
+    const list = node ? (subgroupId ? (node.subgroups.get(subgroupId) || []) : node.direct) : [];
+    if (titleEl) titleEl.textContent = subgroupId || groupTitle(groupId);
+    if (subtitleEl) subtitleEl.textContent = 'Wybierz medytację';
+    if (countEl) countEl.textContent = sessionsLabel(list.length);
   }
 
   document.getElementById('medytacje-view')?.scrollTo?.(0, 0);
