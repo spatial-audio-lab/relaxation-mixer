@@ -84,16 +84,20 @@ const state = {
   isGlobalPaused: false,
   
   // MEDYTACJE
+  // Głos jest STRUMIENIOWANY: <audio> + createMediaElementSource(), nie decodeAudioData().
+  // Dekodowanie 13-minutowego pliku do AudioBuffer zajmowało ~307 MB RAM i wymagało
+  // pobrania całego pliku przed pierwszym dźwiękiem. Element <audio> gra od pierwszych
+  // kilobajtów i sam trzyma pozycję (el.currentTime), więc seek i pauza są natywne.
   meditation: {
     selected: null,
-    buffer: null,
-    source: null,
+    el: null,          // HTMLAudioElement — źródło strumienia
+    node: null,        // MediaElementAudioSourceNode — wpięcie w graf WebAudio
+    ready: false,      // metadane wczytane, można grać
     gainNode: null,
     pannerNode: null,
     isPlaying: false,
     isPaused: false,
-    pauseTime: 0,
-    startTime: 0,
+    pauseTime: 0,      // pozycja w sekundach — kopia el.currentTime, przeżywa zmianę sesji
     duration: 0,
     volume: 1,
     hrtfEnabled: true,
@@ -101,12 +105,12 @@ const state = {
     syncWithSpace: false
   },
 
-  // PRZESTRZEŃ TŁA
+  // PRZESTRZEŃ TŁA — sceny też strumieniowane (pliki 6–12 min, ~285 MB każdy po dekodowaniu)
   space: {
     active: null,
-    sources: {},
+    elements: {},
+    nodes: {},
     gains: {},
-    buffers: {},
     volumes: {},
     instanceIds: {},
     loadingSceneId: null
@@ -274,21 +278,84 @@ function coverContent(item) {
   return item.cover ? '' : `<span class="cover-icon">◈</span>`;
 }
 
-// --- Ostatnio odtwarzana medytacja (sekcja "Kontynuuj") ---
+// --- Ostatnio odtwarzana medytacja + pozycja (sekcja "Kontynuuj") ---
+// Stary klucz trzymał samo id, więc „Kontynuuj" zawsze startowało od zera.
+// Nowy klucz trzyma { id, position, duration, updatedAt }; stary jest czytany
+// jako zapas, żeby nikt nie stracił ostatniego wyboru po aktualizacji.
 const LAST_MEDITATION_KEY = 'relaxationMixer.lastMeditationId';
+const RESUME_KEY = 'relaxationMixer.resume';
+
+// Poniżej tego progu nie ma czego wznawiać, powyżej (do końca) sesja jest wysłuchana.
+const RESUME_MIN_SECONDS = 15;
+const RESUME_END_MARGIN = 20;
+
+function readResumeState() {
+  try {
+    const raw = localStorage.getItem(RESUME_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.id === 'string') return parsed;
+    }
+  } catch (e) {}
+
+  try {
+    const legacyId = localStorage.getItem(LAST_MEDITATION_KEY);
+    if (legacyId) return { id: legacyId, position: 0, duration: 0 };
+  } catch (e) {}
+
+  return null;
+}
 
 function getLastMeditationId() {
-  try {
-    return localStorage.getItem(LAST_MEDITATION_KEY);
-  } catch (e) {
-    return null;
-  }
+  return readResumeState()?.id || null;
+}
+
+// Pozycja wznowienia dla danej sesji — 0, gdy sesja jest inna, ledwie zaczęta
+// albo dosłuchana do końca (wtedy „Kontynuuj" ma zacząć od nowa, nie od napisów końcowych).
+function getResumePosition(sessionId) {
+  const saved = readResumeState();
+  if (!saved || saved.id !== sessionId) return 0;
+
+  const position = Number(saved.position) || 0;
+  const duration = Number(saved.duration) || 0;
+  if (position < RESUME_MIN_SECONDS) return 0;
+  if (duration > 0 && position > duration - RESUME_END_MARGIN) return 0;
+  return position;
 }
 
 function setLastMeditationId(id) {
+  const previous = readResumeState();
+  const keepPosition = previous && previous.id === id;
+
+  writeResumeState({
+    id,
+    position: keepPosition ? Number(previous.position) || 0 : 0,
+    duration: keepPosition ? Number(previous.duration) || 0 : 0
+  });
+}
+
+function writeResumeState({ id, position, duration }) {
+  if (!id) return;
   try {
-    localStorage.setItem(LAST_MEDITATION_KEY, id);
+    localStorage.setItem(RESUME_KEY, JSON.stringify({
+      id,
+      position: Math.max(0, Math.round(position || 0)),
+      duration: Math.max(0, Math.round(duration || 0)),
+      updatedAt: Date.now()
+    }));
+    localStorage.setItem(LAST_MEDITATION_KEY, id); // zgodność wstecz
   } catch (e) {}
+}
+
+// Zapis pozycji bieżącej sesji — wołany przy pauzie, stopie, seeku i cyklicznie w trakcie gry.
+function saveResumePosition() {
+  const id = state.meditation.selected;
+  if (!id) return;
+  writeResumeState({
+    id,
+    position: currentMeditationTime(),
+    duration: state.meditation.duration
+  });
 }
 
 function updateGreeting() {
@@ -465,6 +532,78 @@ async function loadAudioBuffer(primaryUrl, fallbackUrl, { quiet = false } = {}) 
   return null;
 }
 
+// ================================================================
+// === STRUMIENIOWANIE (<audio> + MediaElementSource) ===
+// ================================================================
+// Używane dla materiałów długich: głos lektora (3–13 min) i sceny tła (6–12 min).
+// Krótsze obiekty 3D zostają na AudioBuffer, bo tylko AudioBufferSourceNode zapętla
+// próbkowo dokładnie — pętla na elemencie <audio> ma słyszalny szew.
+
+// Podpina jeden konkretny adres i czeka na metadane. Rozwiązuje się, gdy znany jest
+// czas trwania (czyli po pierwszych kilobajtach), nie po pobraniu całego pliku.
+function attachMediaSource(el, url) {
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      el.removeEventListener('loadedmetadata', onLoaded);
+      el.removeEventListener('error', onError);
+    };
+    const onLoaded = () => { cleanup(); resolve(); };
+    const onError = () => { cleanup(); reject(new Error(url)); };
+
+    el.addEventListener('loadedmetadata', onLoaded);
+    el.addEventListener('error', onError);
+    el.src = url;
+    el.load();
+  });
+}
+
+// Odpowiednik loadAudioBuffer() dla strumienia: próbuje kolejno primary → fallback.
+// Zwraca gotowy HTMLAudioElement albo null.
+async function loadMediaElement(primaryUrl, fallbackUrl, { loop = false, quiet = false } = {}) {
+  const urls = [primaryUrl, fallbackUrl].filter(Boolean);
+  if (!urls.length) return null;
+
+  const el = new Audio();
+  el.preload = 'auto';
+  el.loop = loop;
+  el.playsInline = true;
+  el.setAttribute('playsinline', '');
+
+  // Element trafia do DOM celowo: Safari na iOS potrafi odmówić odtwarzania
+  // elementom odłączonym od dokumentu, zwłaszcza wpiętym w graf WebAudio.
+  // Bez atrybutu 'controls' nic nie renderuje, ale ukrywamy go na wszelki wypadek.
+  el.hidden = true;
+  el.style.display = 'none';
+  document.body.appendChild(el);
+
+  for (const url of urls) {
+    try {
+      await attachMediaSource(el, url);
+      return el;
+    } catch (e) {
+      if (!quiet) console.warn(`Nie można załadować: ${url}`);
+    }
+  }
+
+  releaseMediaElement(el);
+  return null;
+}
+
+// Zwolnienie strumienia: bez tego przeglądarka trzyma bufor sieciowy i dekoder
+// dla elementu, którego już nie słychać.
+function releaseMediaElement(el, node) {
+  if (node) {
+    try { node.disconnect(); } catch (e) {}
+  }
+  if (!el) return;
+  try {
+    el.pause();
+    el.removeAttribute('src');
+    el.load();
+    el.remove();
+  } catch (e) {}
+}
+
 // Gongi timera są opcjonalne: jeśli plików nie ma, timer nadal działa (wycisza dźwięk),
 // tylko bez sygnału audio. Dlatego 'quiet' — brak pliku nie jest błędem aplikacji.
 async function loadTimerSounds() {
@@ -494,25 +633,98 @@ function playTimerSound(buffer) {
 // === SEKCJA: MEDITATION PLAYBACK ===
 // ================================================================
 
+// Jedno źródło prawdy o pozycji: element <audio>, gdy istnieje; zapamiętana wartość, gdy nie.
+function currentMeditationTime() {
+  const el = state.meditation.el;
+  if (el && isFinite(el.currentTime)) return el.currentTime;
+  return state.meditation.pauseTime || 0;
+}
+
 async function loadMeditationSession(sessionId) {
   const session = CONFIG.sessions.find(s => s.id === sessionId);
   if (!session) return;
-  
+
   showStatus(`Przygotowuję: ${session.name}...`);
-  
+
   const loading = document.getElementById('voiceLoading');
   if (loading) loading.classList.add('visible');
-  
+
+  // Zwolnij poprzedni strumień, zanim podepniemy nowy — jeden element na sesję.
+  releaseMediaElement(state.meditation.el, state.meditation.node);
+  state.meditation.el = null;
+  state.meditation.node = null;
+  state.meditation.ready = false;
+  state.meditation.duration = 0;
+
   state.meditation.selected = sessionId;
   setLastMeditationId(sessionId);
   renderContinueSection();
 
-  state.meditation.buffer = await loadAudioBuffer(session.file, session.fallback);
-  
+  const el = await loadMediaElement(session.file, session.fallback);
+
   if (loading) loading.classList.remove('visible');
-  
-  if (state.meditation.buffer) {
-    state.meditation.duration = state.meditation.buffer.duration;
+
+  // Użytkownik zdążył wybrać inną sesję, zanim ta się wczytała — porzuć wynik.
+  if (state.meditation.selected !== sessionId) {
+    releaseMediaElement(el);
+    return;
+  }
+
+  if (el) {
+    state.meditation.el = el;
+    state.meditation.ready = true;
+
+    // createMediaElementSource wolno wywołać dokładnie raz na element.
+    // Od tego momentu dźwięk idzie wyłącznie przez graf (gain → paner → spatialBus).
+    if (state.audioContext) {
+      state.meditation.node = state.audioContext.createMediaElementSource(el);
+      state.meditation.node.connect(state.meditation.gainNode);
+    }
+
+    state.meditation.duration = isFinite(el.duration) ? el.duration : 0;
+
+    // Kontenery bez czasu w nagłówku podają go dopiero po doczytaniu — wtedy odśwież.
+    el.addEventListener('durationchange', () => {
+      if (state.meditation.el !== el || !isFinite(el.duration)) return;
+      state.meditation.duration = el.duration;
+      document.getElementById('totalTime').textContent = formatTime(el.duration);
+      updateProgressBar(el.duration > 0 ? currentMeditationTime() / el.duration : 0);
+    });
+
+    el.addEventListener('ended', () => {
+      if (state.meditation.el !== el) return;
+      stopMeditation();
+      if (state.meditation.syncWithSpace) {
+        stopAllSpace();
+        showStatus('Medytacja zakończona — przestrzeń zatrzymana');
+      } else {
+        showStatus('Medytacja zakończona');
+      }
+    });
+
+    // Przeglądarka może przerwać odtwarzanie sama (np. utrata sieci) — stan UI musi nadążyć.
+    el.addEventListener('pause', () => {
+      if (state.meditation.el !== el || !state.meditation.isPlaying) return;
+      state.meditation.isPlaying = false;
+      state.meditation.isPaused = true;
+      state.meditation.pauseTime = el.currentTime;
+      updateGlobalPlayState();
+      updateMediaSession();
+      markStateChanged();
+    });
+
+    // Wznowienie od zapamiętanej pozycji (sekcja „Kontynuuj").
+    const resumeAt = getResumePosition(sessionId);
+    if (resumeAt > 0) {
+      try { el.currentTime = resumeAt; } catch (e) {}
+      state.meditation.pauseTime = resumeAt;
+      state.meditation.isPaused = true;
+      showStatus(`${session.name} — wznawiam od ${formatTime(resumeAt)}`);
+    } else {
+      state.meditation.pauseTime = 0;
+      showStatus(`${session.name} — gotowe`);
+    }
+
     document.getElementById('totalTime').textContent = formatTime(state.meditation.duration);
     document.getElementById('meditationTitle').textContent = session.name;
     const descEl = document.getElementById('meditationDesc');
@@ -524,81 +736,92 @@ async function loadMeditationSession(sessionId) {
       if (session.duration) parts.push(session.duration);
       metaEl.textContent = parts.join(' · ');
     }
-    showStatus(`${session.name} — gotowe`);
+
+    const progress = state.meditation.duration > 0
+      ? state.meditation.pauseTime / state.meditation.duration
+      : 0;
+    updateProgressBar(progress);
+    document.getElementById('currentTime').textContent = formatTime(state.meditation.pauseTime);
   } else {
     showStatus('Nie mogę załadować sesji', 3000);
   }
-  
+
+  updateMediaSession();
   markStateChanged();
 }
 
 function playMeditation() {
-  if (!state.meditation.buffer || !state.audioContext) return;
-  
-  const source = state.audioContext.createBufferSource();
-  source.buffer = state.meditation.buffer;
-  source.connect(state.meditation.gainNode);
-  
-  const offset = state.meditation.isPaused ? state.meditation.pauseTime : 0;
-  
-  source.start(0, offset);
-  state.meditation.source = source;
-  state.meditation.startTime = state.audioContext.currentTime - offset;
+  const el = state.meditation.el;
+  if (!el || !state.audioContext) return;
+
+  // Element bywa wciąż w stanie „suspended", jeśli użytkownik wrócił z tła.
+  if (state.audioContext.state === 'suspended') state.audioContext.resume().catch(() => {});
+
+  // Zapas: gdyby sesja wczytała się przed inicjalizacją kontekstu, wpięcie w graf
+  // nie powstałoby i dźwięk szedłby prosto na wyjście, z pominięciem miksera.
+  if (!state.meditation.node && state.meditation.gainNode) {
+    state.meditation.node = state.audioContext.createMediaElementSource(el);
+    state.meditation.node.connect(state.meditation.gainNode);
+  }
+
+  const playPromise = el.play();
+  if (playPromise && typeof playPromise.catch === 'function') {
+    playPromise.catch((err) => {
+      // Najczęściej: polityka autoodtwarzania (brak gestu). Nie zostawiaj UI w stanie „gra".
+      console.warn('Odtwarzanie odrzucone przez przeglądarkę:', err?.name || err);
+      state.meditation.isPlaying = false;
+      state.meditation.isPaused = true;
+      updateGlobalPlayState();
+      markStateChanged();
+      showStatus('Dotknij ponownie, aby odtworzyć', 2500);
+    });
+  }
+
   state.meditation.isPlaying = true;
   state.meditation.isPaused = false;
-  
-  source.onended = () => {
-    // Ignoruj opóźnione 'ended' ze "starego" source'a (np. po seeku/restarcie) —
-    // inaczej zdarzenie z odtwarzania sprzed przewinięcia ubija nowo wystartowane audio.
-    if (state.meditation.source !== source) return;
-    if (state.meditation.isPlaying && !state.meditation.isPaused) {
-      stopMeditation();
-      if (state.meditation.syncWithSpace) {
-        stopAllSpace();
-        showStatus('Medytacja zakończona — przestrzeń zatrzymana');
-      } else {
-        showStatus('Medytacja zakończona');
-      }
-    }
-  };
-  
+
   updateGlobalPlayState();
+  updateMediaSession();
   markStateChanged();
   startProgressUpdate();
 }
 
 function pauseMeditation() {
-  if (!state.meditation.isPlaying || !state.meditation.source) return;
-  
-  state.meditation.pauseTime = state.audioContext.currentTime - state.meditation.startTime;
-  
-  try {
-    state.meditation.source.stop();
-  } catch (e) {}
-  
+  const el = state.meditation.el;
+  if (!el || !state.meditation.isPlaying) return;
+
+  state.meditation.pauseTime = el.currentTime;
+  el.pause();
+
   state.meditation.isPlaying = false;
   state.meditation.isPaused = true;
-  
+
+  saveResumePosition();
   updateGlobalPlayState();
+  updateMediaSession();
   markStateChanged();
 }
 
 function stopMeditation() {
-  if (state.meditation.source) {
-    try {
-      state.meditation.source.stop();
-    } catch (e) {}
-    state.meditation.source = null;
+  const el = state.meditation.el;
+
+  // Zapisz pozycję ZANIM ją wyzerujesz — inaczej „Kontynuuj" traci sens po każdym stopie.
+  if (el && state.meditation.selected) saveResumePosition();
+
+  if (el) {
+    el.pause();
+    try { el.currentTime = 0; } catch (e) {}
   }
-  
+
   state.meditation.isPlaying = false;
   state.meditation.isPaused = false;
   state.meditation.pauseTime = 0;
-  
+
   updateProgressBar(0);
   document.getElementById('currentTime').textContent = '00:00';
-  
+
   updateGlobalPlayState();
+  updateMediaSession();
   markStateChanged();
 }
 
@@ -634,21 +857,33 @@ function toggleHRTF(enabled) {
 }
 
 let progressInterval = null;
+let resumeSaveTick = 0;
 
 function startProgressUpdate() {
   if (progressInterval) clearInterval(progressInterval);
-  
+
   progressInterval = setInterval(() => {
     if (!state.meditation.isPlaying) {
       clearInterval(progressInterval);
+      progressInterval = null;
       return;
     }
-    
-    const elapsed = state.audioContext.currentTime - state.meditation.startTime;
-    const progress = Math.min(elapsed / state.meditation.duration, 1);
-    
+
+    const elapsed = currentMeditationTime();
+    const duration = state.meditation.duration || 0;
+    const progress = duration > 0 ? Math.min(elapsed / duration, 1) : 0;
+
+    state.meditation.pauseTime = elapsed;
     updateProgressBar(progress);
+    updateMediaSessionPosition();
     document.getElementById('currentTime').textContent = formatTime(elapsed);
+
+    // Pozycja na dysk co ~5 s — dość rzadko, żeby nie zaśmiecać localStorage,
+    // dość często, żeby zamknięcie karty w trakcie sesji nie kasowało postępu.
+    if (++resumeSaveTick >= 50) {
+      resumeSaveTick = 0;
+      saveResumePosition();
+    }
   }, 100);
 }
 
@@ -674,6 +909,107 @@ function updateProgressBar(progress) {
 
 
 // ================================================================
+// === SEKCJA: MEDIA SESSION (ekran blokady, słuchawki, Centrum sterowania) ===
+// ================================================================
+// Aplikacja medytacyjna jest używana z wygaszonym ekranem — bez tego nie da się
+// zatrzymać sesji przyciskiem na słuchawkach ani zobaczyć, co gra.
+
+function mediaSessionSupported() {
+  return typeof navigator !== 'undefined' && 'mediaSession' in navigator;
+}
+
+function setupMediaSessionHandlers() {
+  if (!mediaSessionSupported()) return;
+
+  const set = (action, handler) => {
+    try { navigator.mediaSession.setActionHandler(action, handler); }
+    catch (e) { /* akcja nieobsługiwana przez tę przeglądarkę — pomijamy */ }
+  };
+
+  set('play', () => { if (state.meditation.el) playMeditation(); });
+  set('pause', () => pauseMeditation());
+  set('stop', () => stopMeditation());
+  set('seekbackward', (d) => seekMeditationBy(-(d?.seekOffset || 15)));
+  set('seekforward', (d) => seekMeditationBy(d?.seekOffset || 15));
+  set('seekto', (d) => {
+    if (d?.seekTime == null) return;
+    seekMeditationTo(d.seekTime);
+  });
+}
+
+function updateMediaSession() {
+  if (!mediaSessionSupported()) return;
+
+  const session = CONFIG.sessions.find(s => s.id === state.meditation.selected);
+
+  if (!session) {
+    navigator.mediaSession.metadata = null;
+    navigator.mediaSession.playbackState = 'none';
+    return;
+  }
+
+  const artwork = [];
+  if (session.cover) {
+    artwork.push({
+      src: new URL(session.cover, document.baseURI).href,
+      sizes: '512x512',
+      type: session.cover.endsWith('.webp') ? 'image/webp' : 'image/jpeg'
+    });
+  }
+
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: session.name,
+      artist: session.author || 'Spatial Audio Lab',
+      album: session.group || 'Przestrzeń relaksu',
+      artwork
+    });
+  } catch (e) {}
+
+  navigator.mediaSession.playbackState = state.meditation.isPlaying
+    ? 'playing'
+    : (state.meditation.isPaused ? 'paused' : 'none');
+
+  updateMediaSessionPosition();
+}
+
+function updateMediaSessionPosition() {
+  if (!mediaSessionSupported() || !navigator.mediaSession.setPositionState) return;
+
+  const duration = state.meditation.duration || 0;
+  if (!(duration > 0)) return;
+
+  try {
+    navigator.mediaSession.setPositionState({
+      duration,
+      playbackRate: 1,
+      position: Math.min(currentMeditationTime(), duration)
+    });
+  } catch (e) {}
+}
+
+// Przewijanie wspólne dla suwaka, klawiatury i przycisków systemowych.
+function seekMeditationTo(seconds) {
+  const el = state.meditation.el;
+  const duration = state.meditation.duration || 0;
+  if (!el || !(duration > 0)) return;
+
+  const target = Math.min(duration, Math.max(0, seconds));
+  try { el.currentTime = target; } catch (e) {}
+  state.meditation.pauseTime = target;
+
+  updateProgressBar(target / duration);
+  document.getElementById('currentTime').textContent = formatTime(target);
+  updateMediaSessionPosition();
+  saveResumePosition();
+}
+
+function seekMeditationBy(delta) {
+  seekMeditationTo(currentMeditationTime() + delta);
+}
+
+
+// ================================================================
 // === SEKCJA: SPACE PLAYBACK ===
 // ================================================================
 
@@ -685,7 +1021,7 @@ async function selectScene(sceneId) {
   showStatus(`Przygotowuję: ${scene.name}...`);
 
   // Zatrzymaj poprzednią scenę
-  if (state.space.active && state.space.sources[state.space.active]) {
+  if (state.space.active && state.space.elements[state.space.active]) {
     const oldSceneId = state.space.active;
     const oldInstanceId = state.space.instanceIds[oldSceneId];
     const oldGain = state.space.gains[oldSceneId];
@@ -697,63 +1033,68 @@ async function selectScene(sceneId) {
     }, CONFIG.fadeOutTime * 1000 * 3);
   }
 
-  // Ładuj bufor
-  if (!state.space.buffers[sceneId]) {
-    state.space.loadingSceneId = sceneId;
+  // Otwórz strumień. Scena to 6–12 minut materiału — dekodowanie do AudioBuffer
+  // kosztowało ~285 MB RAM na scenę i kilkanaście sekund ciszy na LTE.
+  const newInstanceId = generateInstanceId();
+  state.space.instanceIds[sceneId] = newInstanceId;
+  state.space.loadingSceneId = sceneId;
+  markStateChanged();
+
+  const el = await loadMediaElement(scene.file, scene.fallback, { loop: true });
+
+  state.space.loadingSceneId = null;
+
+  // W międzyczasie użytkownik wybrał inną scenę albo wyłączył tę — nie wpinaj sieroty.
+  if (state.space.instanceIds[sceneId] !== newInstanceId) {
+    releaseMediaElement(el);
     markStateChanged();
-    state.space.buffers[sceneId] = await loadAudioBuffer(scene.file, scene.fallback);
-    state.space.loadingSceneId = null;
+    return;
   }
 
-  const buffer = state.space.buffers[sceneId];
-  if (!buffer) {
+  if (!el) {
+    state.space.instanceIds[sceneId] = null;
     showStatus('Nie mogę odnaleźć tej przestrzeni', 3000);
     markStateChanged();
     return;
   }
-  
-  const newInstanceId = generateInstanceId();
-  
-  const source = state.audioContext.createBufferSource();
-  source.buffer = buffer;
-  source.loop = true;
-  source.connect(state.space.gains[sceneId]);
-  
+
+  const node = state.audioContext.createMediaElementSource(el);
+  node.connect(state.space.gains[sceneId]);
+
   const targetVolume = state.space.volumes[sceneId] ?? 0.5;
   state.space.gains[sceneId].gain.setValueAtTime(0, state.audioContext.currentTime);
   state.space.gains[sceneId].gain.setTargetAtTime(targetVolume, state.audioContext.currentTime, CONFIG.fadeInTime);
-  
-  source.start();
-  
-  state.space.sources[sceneId] = source;
-  state.space.instanceIds[sceneId] = newInstanceId;
+
+  el.play().catch((err) => console.warn('Scena nie wystartowała:', err?.name || err));
+
+  state.space.elements[sceneId] = el;
+  state.space.nodes[sceneId] = node;
   state.space.active = sceneId;
-  
+
   updateGlobalPlayState();
   markStateChanged();
   showStatus(`${scene.name} — jesteś tutaj`);
 }
 
 function stopSceneSafe(sceneId, instanceId) {
-  const currentSource = state.space.sources[sceneId];
   const currentInstanceId = state.space.instanceIds[sceneId];
-  
   if (currentInstanceId !== instanceId) return;
-  
-  if (currentSource) {
-    try {
-      currentSource.stop();
-      currentSource.disconnect();
-    } catch (e) {}
-    delete state.space.sources[sceneId];
-    state.space.instanceIds[sceneId] = null;
+
+  const el = state.space.elements[sceneId];
+  const node = state.space.nodes[sceneId];
+
+  if (el || node) {
+    releaseMediaElement(el, node);
+    delete state.space.elements[sceneId];
+    delete state.space.nodes[sceneId];
   }
+  state.space.instanceIds[sceneId] = null;
 }
 
 function stopScene(sceneId) {
   const instanceId = state.space.instanceIds[sceneId];
-  if (!state.space.sources[sceneId]) return;
-  
+  if (!state.space.elements[sceneId] && !instanceId) return;
+
   const gain = state.space.gains[sceneId];
   gain.gain.setTargetAtTime(0, state.audioContext.currentTime, CONFIG.fadeOutTime);
   
@@ -866,7 +1207,7 @@ async function toggleObject(objectId, enabled) {
   } else {
     if (objState.source) {
       objState.gainNode.gain.setTargetAtTime(0, state.audioContext.currentTime, CONFIG.fadeOutTime);
-      
+
       const sourceToStop = objState.source;
       setTimeout(() => {
         try {
@@ -874,10 +1215,17 @@ async function toggleObject(objectId, enabled) {
           sourceToStop.disconnect();
         } catch (e) {}
       }, CONFIG.fadeOutTime * 1000 * 3);
-      
+
       objState.source = null;
     }
     objState.instanceId = null;
+
+    // Obiekty zostają na AudioBuffer (tylko on zapętla próbkowo dokładnie — pętla
+    // na <audio> ma słyszalny szew), ale bufor 100–195 s to 38–75 MB float32.
+    // Trzymanie go po wyłączeniu dźwięku nie ma po co: ponowne włączenie i tak
+    // czyta z cache'u HTTP, a zysk to dziesiątki megabajtów na karcie.
+    objState.buffer = null;
+
     updateGlobalPlayState();
     showStatus(`${obj.name} — usunięto`);
   }
@@ -935,7 +1283,7 @@ function selectObjectFor3DControl(objectId) {
     if (objState) {
       const titleEl = document.getElementById('controls3dTitle');
       if (titleEl && obj) {
-        titleEl.textContent = `${obj.icon} ${obj.name} — pozycja 3D`;
+        titleEl.textContent = `${obj.name} — pozycja 3D`;
       }
 
       const pos3d = objState.position3d;
@@ -1094,11 +1442,20 @@ function pauseAll() {
     pauseMeditation();
   }
   
-  // Wycisz przestrzeń
+  // Wycisz przestrzeń, a po wybrzmieniu naprawdę zatrzymaj strumień — samo wyciszenie
+  // zostawiało dekoder sceny pracujący w tle bez żadnego słyszalnego efektu.
   if (state.space.active && state.space.gains[state.space.active]) {
-    state.space.gains[state.space.active].gain.setTargetAtTime(0, state.audioContext.currentTime, 0.1);
+    const sceneId = state.space.active;
+    const instanceId = state.space.instanceIds[sceneId];
+    state.space.gains[sceneId].gain.setTargetAtTime(0, state.audioContext.currentTime, 0.1);
+
+    setTimeout(() => {
+      if (!state.isGlobalPaused) return;                              // zdążył wznowić
+      if (state.space.instanceIds[sceneId] !== instanceId) return;    // scena już inna
+      state.space.elements[sceneId]?.pause();
+    }, 350);
   }
-  
+
   // Wycisz obiekty
   CONFIG.objects.forEach(obj => {
     const objState = state.sounds.objects[obj.id];
@@ -1117,10 +1474,12 @@ function resumeAll() {
     playMeditation();
   }
   
-  // Przywróć głośność przestrzeni
+  // Wznów strumień przestrzeni i przywróć głośność
   if (state.space.active && state.space.gains[state.space.active]) {
-    const vol = state.space.volumes[state.space.active] ?? 0.5;
-    state.space.gains[state.space.active].gain.setTargetAtTime(vol, state.audioContext.currentTime, 0.1);
+    const sceneId = state.space.active;
+    state.space.elements[sceneId]?.play().catch(() => {});
+    const vol = state.space.volumes[sceneId] ?? 0.5;
+    state.space.gains[sceneId].gain.setTargetAtTime(vol, state.audioContext.currentTime, 0.1);
   }
   
   // Przywróć głośność obiektów
@@ -1169,7 +1528,7 @@ function stopAll() {
 // === SEKCJA: BIBLIOTEKA — DRZEWO GRUP/PODGRUP + NAWIGACJA ===
 // ================================================================
 
-// Drzewo biblioteki: Map(groupId -> { id, title, icon, subgroups:Map(subId->[sesje]), direct:[sesje] })
+// Drzewo biblioteki: Map(groupId -> { id, title, subgroups:Map(subId->[sesje]), direct:[sesje] })
 let libraryTree = new Map();
 
 function buildLibraryTree() {
@@ -1179,14 +1538,14 @@ function buildLibraryTree() {
   const metaGroups = (CONFIG.meditationGroups || []).slice()
     .sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
   metaGroups.forEach(g => {
-    tree.set(g.id, { id: g.id, title: g.title || g.id, icon: g.icon || '🧘', subgroups: new Map(), direct: [] });
+    tree.set(g.id, { id: g.id, title: g.title || g.id, subgroups: new Map(), direct: [] });
   });
 
   // Przypisz medytacje do grup/podgrup
   CONFIG.sessions.forEach(s => {
     const gid = s.group || 'Inne';
     if (!tree.has(gid)) {
-      tree.set(gid, { id: gid, title: gid, icon: s.icon || '🧘', subgroups: new Map(), direct: [] });
+      tree.set(gid, { id: gid, title: gid, subgroups: new Map(), direct: [] });
     }
     const node = tree.get(gid);
     if (s.subgroup) {
@@ -1408,12 +1767,12 @@ function renderSoundsList() {
     const pos3d = st?.position3d || { azimuth: 0, elevation: 0, distance: 20 };
     return `
     <div class="item-card sound-card" data-id="${obj.id}" style="--i:${i}" role="group" aria-label="Dźwięk 3D: ${obj.name}">
-      <button type="button" class="sound-toggle" data-id="${obj.id}" role="switch" aria-checked="false" aria-label="Włącz lub wyłącz: ${obj.name}">⏻</button>
+      <button type="button" class="sound-toggle" data-id="${obj.id}" role="switch" aria-checked="false" aria-label="Włącz lub wyłącz: ${obj.name}">WYŁ</button>
       <div class="item-info">
         <div class="item-name">${obj.name}</div>
         <div class="item-desc" data-role="pos3d-meta">${Math.round(pos3d.azimuth)}° · ${Math.round(pos3d.distance)}m · ${pos3d.elevation >= 0 ? '+' : ''}${Math.round(pos3d.elevation)}°</div>
       </div>
-      <button type="button" class="btn-3d-position" data-id="${obj.id}" aria-label="Ustaw pozycję 3D: ${obj.name}" title="Pozycja 3D">⚙</button>
+      <button type="button" class="btn-3d-position" data-id="${obj.id}" aria-label="Ustaw pozycję 3D: ${obj.name}" title="Pozycja 3D">3D</button>
     </div>
   `;
   }).join('');
@@ -1448,14 +1807,33 @@ function renderContinueSection() {
   }
 
   section.classList.remove('hidden-layer');
+
+  // Pozycja zapamiętana z poprzedniej sesji — „Kontynuuj" ma naprawdę kontynuować,
+  // a nie startować od zera. Gdy pozycji nie ma, karta wygląda jak dotąd.
+  const saved = readResumeState();
+  const resumeAt = getResumePosition(session.id);
+  const savedDuration = (saved && saved.id === session.id) ? Number(saved.duration) || 0 : 0;
+  const ratio = (resumeAt > 0 && savedDuration > 0)
+    ? Math.min(resumeAt / savedDuration, 1)
+    : 0;
+
+  const metaText = resumeAt > 0
+    ? `${formatTime(resumeAt)}${savedDuration > 0 ? ' z ' + formatTime(savedDuration) : ''}`
+    : `${session.duration || 'Medytacja'}${session.group ? ' · ' + session.group : ''}`;
+
+  const ariaLabel = resumeAt > 0
+    ? `Wznów medytację: ${session.name}, od ${formatTime(resumeAt)}`
+    : `Otwórz medytację: ${session.name}`;
+
   row.innerHTML = `
-    <div class="continue-card" data-id="${session.id}" tabindex="0" role="button" aria-label="Otwórz medytację: ${session.name}">
+    <div class="continue-card" data-id="${session.id}" tabindex="0" role="button" aria-label="${ariaLabel}">
       <div class="continue-card-cover cover-art" style="${coverStyleAttr(session)}">${coverContent(session)}</div>
       <div class="continue-card-info">
         <div class="continue-card-title">${session.name}</div>
-        <div class="continue-card-meta">${session.duration || 'Medytacja'}${session.group ? ' · ' + session.group : ''}</div>
+        <div class="continue-card-meta">${metaText}</div>
+        ${ratio > 0 ? `<div class="continue-card-progress" aria-hidden="true"><span style="width:${(ratio * 100).toFixed(1)}%"></span></div>` : ''}
       </div>
-      <button class="continue-card-play" aria-label="Odtwórz ${session.name}">▶</button>
+      <button class="continue-card-play" aria-label="${resumeAt > 0 ? 'Wznów' : 'Odtwórz'} ${session.name}">▶</button>
     </div>
   `;
 }
@@ -1647,10 +2025,13 @@ function syncSoundsUI() {
     card.classList.toggle('editing', state.sounds.selectedObjectId === id);
 
     // Stan przycisku włączania (toggle) — jedyny sposób na włączenie/wyłączenie
+    // Wzorzec przełącznika z manifestu (sekcja 05): jedno kliknięcie zmienia
+    // barwę I napis, więc stan da się odczytać bez rozpoznawania piktogramu.
     const toggle = card.querySelector('.sound-toggle');
     if (toggle) {
       toggle.setAttribute('aria-checked', String(enabled));
       toggle.setAttribute('aria-busy', String(loading));
+      toggle.textContent = enabled ? 'WŁ' : 'WYŁ';
     }
 
     // Odczyt pozycji zawsze widoczny liczbowo (manifest sekcja 06)
@@ -2012,6 +2393,10 @@ function setupEventHandlers() {
   });
   
   document.getElementById('btnStopMeditation')?.addEventListener('click', stopMeditation);
+
+  // Skoki ±15 s — ten sam kod obsługuje przyciski systemowe (Media Session).
+  document.getElementById('btnSeekBack')?.addEventListener('click', () => seekMeditationBy(-15));
+  document.getElementById('btnSeekForward')?.addEventListener('click', () => seekMeditationBy(15));
   
   // === Dolna nawigacja stref ===
   document.getElementById('bottomNav')?.addEventListener('click', (e) => {
@@ -2144,26 +2529,16 @@ function setupEventHandlers() {
       document.getElementById('currentTime').textContent = formatTime(seekTime);
     };
 
-    // Faktyczny seek na audiobufferze — dopiero po puszczeniu suwaka.
+    // Faktyczny seek — dopiero po puszczeniu suwaka.
+    // Na strumieniu to zwykłe ustawienie currentTime: bez zatrzymywania i restartu
+    // źródła, więc odtwarzanie nie ma dziury i nie gubi stanu.
     const commitSeek = (progress) => {
-      if (!state.meditation.buffer) return;
-      const seekTime = progress * state.meditation.duration;
-      const wasPlaying = state.meditation.isPlaying;
-
-      stopMeditation();
-      state.meditation.pauseTime = seekTime;
-      state.meditation.isPaused = true;
-
-      updateProgressBar(progress);
-      document.getElementById('currentTime').textContent = formatTime(seekTime);
-
-      if (wasPlaying) {
-        playMeditation();
-      }
+      if (!state.meditation.el) return;
+      seekMeditationTo(progress * (state.meditation.duration || 0));
     };
 
     bar.addEventListener('pointerdown', (e) => {
-      if (!state.meditation.buffer) return;
+      if (!state.meditation.el) return;
       dragging = true;
       bar.classList.add('dragging');
       bar.setPointerCapture(e.pointerId);
@@ -2189,11 +2564,9 @@ function setupEventHandlers() {
     // myszą/dotykiem. Skoki dobrane pod materiał kilkunastominutowy.
     bar.addEventListener('keydown', (e) => {
       const duration = state.meditation.duration || 0;
-      if (!state.meditation.buffer || duration <= 0) return;
+      if (!state.meditation.el || duration <= 0) return;
 
-      const current = state.meditation.isPlaying
-        ? state.audioContext.currentTime - state.meditation.startTime
-        : state.meditation.pauseTime;
+      const current = currentMeditationTime();
 
       let target = null;
       switch (e.key) {
@@ -2209,8 +2582,7 @@ function setupEventHandlers() {
       }
 
       e.preventDefault();
-      target = Math.min(duration, Math.max(0, target));
-      commitSeek(target / duration);
+      seekMeditationTo(target);
     });
   })();
   
@@ -2239,8 +2611,8 @@ function setupEventHandlers() {
   });
 
   // === Sounds 3D Controls ===
-  // Toggle TYLKO dedykowanym przyciskiem ⏻ — skrolowanie listy nie zmienia stanu.
-  // Neutralny obszar wiersza oraz ⚙ otwierają arkusz edycji pozycji 3D.
+  // Toggle TYLKO dedykowanym przyciskiem WŁ/WYŁ — skrolowanie listy nie zmienia stanu.
+  // Neutralny obszar wiersza oraz przycisk 3D otwierają arkusz edycji pozycji 3D.
   document.getElementById('soundsList')?.addEventListener('click', (e) => {
     const card = e.target.closest('.sound-card');
     if (!card) return;
@@ -2252,7 +2624,7 @@ function setupEventHandlers() {
       return;
     }
 
-    // ⚙ lub neutralny obszar wiersza → arkusz edycji pozycji 3D
+    // Przycisk 3D lub neutralny obszar wiersza → arkusz edycji pozycji 3D
     openSoundSheet(id);
   });
 
@@ -2360,7 +2732,7 @@ function setupEventHandlers() {
         return;
       }
 
-      // Obiekty 3D — tap/klawiatura włącza/wyłącza (long-press/⚙ otwiera pozycję)
+      // Obiekty 3D — tap/klawiatura włącza/wyłącza (long-press / przycisk 3D otwiera pozycję)
       if (target.matches('.sound-card')) {
         e.preventDefault();
         const id = target.dataset.id;
@@ -2495,7 +2867,6 @@ async function loadManifest() {
     id: item.id,
     name: item.title || item.name || item.id,
     author: item.author || '',
-    icon: item.icon || '🎧',
     file: item.src?.webm || item.file || null,
     fallback: item.src?.mp3 || item.fallback || null,
     description: item.description || '',
@@ -2564,6 +2935,14 @@ async function init() {
 
   // 5. Event handlery
   setupEventHandlers();
+  setupMediaSessionHandlers();
+
+  // Zamknięcie karty / przejście w tło nie może kasować postępu sesji.
+  // 'pagehide' zamiast 'unload' — na iOS to jedyne zdarzenie, które realnie dociera.
+  window.addEventListener('pagehide', saveResumePosition);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') saveResumePosition();
+  });
 
   // 6. Synchronizacja UI
   syncAllUI();
