@@ -118,9 +118,10 @@
       <section class="home-section library-section">
         <div class="section-header" id="librarySectionHeader">
           <div>
-            <div class="section-title">Medytacje</div>
-            <div class="section-subtitle">Wybierz temat</div>
+            <div class="section-title" id="librarySectionTitle">Medytacje</div>
+            <div class="section-subtitle" id="librarySectionSubtitle">Wybierz temat</div>
           </div>
+          <span class="section-count" id="librarySectionCount"></span>
         </div>
 
         <!-- Poziom 1: tematy (grupy) -->
@@ -191,6 +192,8 @@
 
       <div class="glass-card player-card">
         <div class="player-title" id="meditationTitle">Wybierz sesję</div>
+        <div class="player-desc" id="meditationDesc"></div>
+        <div class="player-meta" id="meditationMeta"></div>
 
         <div class="progress-container">
           <span class="progress-time" id="currentTime">00:00</span>
