@@ -186,7 +186,7 @@
         <div class="item-list sounds-list" id="soundsList"></div>
 
         <p class="hint-text">
-          <b>⏻</b> włącza/wyłącza dźwięk · dotknij <b>⚙</b> aby dostroić pozycję · radar rozstawia wszystko na jednym ekranie
+          <b>WŁ/WYŁ</b> włącza i wyłącza dźwięk · dotknij <b>3D</b> aby dostroić pozycję · radar rozstawia wszystko na jednym ekranie
         </p>
       </div>
     </main>
@@ -208,7 +208,7 @@
         </div>
       </div>
 
-      <div class="glass-card player-card">
+      <div class="player-card">
         <h2 class="player-title" id="meditationTitle">Wybierz sesję</h2>
         <div class="player-desc" id="meditationDesc"></div>
         <div class="player-meta" id="meditationMeta"></div>
@@ -226,8 +226,10 @@
         </div>
 
         <div class="player-controls">
-          <button class="btn-control" id="btnStopMeditation" aria-label="Stop">■</button>
+          <button class="btn-control" id="btnStopMeditation" aria-label="Zatrzymaj i wróć na początek">■</button>
+          <button class="btn-control btn-seek" id="btnSeekBack" aria-label="Cofnij o 15 sekund">−15</button>
           <button class="btn-play-main" id="btnPlayMeditation" aria-label="Odtwórz">▶</button>
+          <button class="btn-control btn-seek" id="btnSeekForward" aria-label="Przewiń o 15 sekund do przodu">+15</button>
         </div>
 
         <div class="hrtf-controls">
@@ -272,7 +274,7 @@
           </div>
         </div>
       </div>
-      <p class="radar-overlay-hint">Przeciągnij obiekt, aby ustawić kierunek i odległość · dostrój szczegóły przez <b>⚙</b> w liście</p>
+      <p class="radar-overlay-hint">Przeciągnij obiekt, aby ustawić kierunek i odległość · dostrój szczegóły przez <b>3D</b> w liście</p>
     </div>
 
     <!-- Bottom-sheet: ustawienia pozycji dźwięku 3D -->
