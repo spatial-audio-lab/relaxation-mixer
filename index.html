@@ -188,7 +188,13 @@
         <button class="btn-mixer" id="btnOpenMixer" aria-label="Przejdź do miksera tła" title="Mikser tła">MIX</button>
       </div>
 
-      <div class="player-cover cover-art" id="playerCover">◈</div>
+      <div class="player-cover cover-art" id="playerCover">
+        <span class="player-cover-fallback" id="playerCoverFallback">◈</span>
+        <div class="player-cover-overlay">
+          <span class="player-cover-hrtf" id="playerHrtfBadge">STEREO</span>
+          <span class="player-cover-pos" id="playerPosBadge">GŁOS: ŚRODEK</span>
+        </div>
+      </div>
 
       <div class="glass-card player-card">
         <div class="player-title" id="meditationTitle">Wybierz sesję</div>
