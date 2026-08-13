@@ -1,243 +1,175 @@
-# 🎧 Przestrzeń Relaksu
+# Przestrzeń Relaksu
 
-**Binauralny mikser relaksacyjny z przestrzennym audio 3D**
+**Binauralny mikser relaksacyjny z dźwiękiem przestrzennym 3D**
 
-Immersyjna aplikacja webowa łącząca prowadzone medytacje z binauralnymi krajobrazami dźwiękowymi i przestrzennie pozycjonowanymi obiektami audio. 
-Zaprojektowana w estetyce *Ambient Morphism* — płynnych gradientów, glassmorphizmu i organicznych animacji.
+Aplikacja webowa łącząca prowadzone medytacje z binauralnymi krajobrazami dźwiękowymi
+i punktowymi źródłami audio rozstawianymi wokół słuchacza. Część ekosystemu narzędzi
+**Spatial Audio Lab**, zbudowana zgodnie z *SAL Design Manifest v3.0*.
 
-https://sanefungus.github.io/relaxation-mixer/
----
+**Na żywo:** https://spatial-audio-lab.github.io/relaxation-mixer/
 
-## ✨ Funkcjonalności
-
-### 🧘 Sesje Głosowe
-- 5 prowadzonych medytacji z pozycjonowaniem HRTF
-- Kontrola Play/Pause/Stop z pamięcią pozycji
-- Przestrzenne rozmieszczenie głosu (Lewa/Środek/Prawa)
-- Możliwość wyłączenia efektu 3D
-
-### 🌍 Sceny Binauralne
-- 4 gotowe krajobrazy dźwiękowe (stereo binaural)
-- Płynne crossfade między scenami
-- Indywidualna kontrola głośności per scena
-- Pętlone odtwarzanie w tle
-
-### 🔮 Obiekty Dźwiękowe 3D
-- 4 punktowe źródła z pełnym HRTF
-- Możliwość włączenia wielu obiektów jednocześnie
-- Przestrzenne pozycjonowanie każdego obiektu (L/C/R)
-- Indywidualna kontrola głośności
-
-### 🎨 Interfejs Ambient Morphism
-- Animowane tło Aurora z pływającymi orbami
-- Panele glassmorphism z rozmyciem tła
-- Efekt "oddychania" podczas odtwarzania
-- Pełna responsywność (mobile-first)
-- Wsparcie dla `prefers-reduced-motion`
-
-### ♿ Dostępność (WCAG 2.1 AA)
-- Pełna nawigacja klawiaturą
-- Atrybuty ARIA dla czytników ekranu
-- Widoczne wskaźniki focusu
-- Komunikaty aria-live
+> **Wymaga słuchawek.** Cały efekt przestrzenny opiera się na różnicy między kanałami —
+> na głośnikach zniknie.
 
 ---
 
-## 🛠️ Technologie
+## 1. Funkcje
 
-- **HTML5** — Semantyczna struktura
-- **CSS3** — Animacje, glassmorphism, CSS variables
-- **JavaScript** — Vanilla JS, bez frameworków
-- **Web Audio API** — AudioContext, HRTF PannerNode
-- **Google Fonts** — Outfit, DM Sans, JetBrains Mono
+### Medytacje prowadzone
+- Biblioteka trzypoziomowa: temat → podtemat → sesja, ładowana z `manifest.json`.
+- Panoramowanie głosu (lewa / środek / prawa) modelem `equalpower` — bez zabarwiania barwy mowy.
+- Przewijanie suwakiem, klawiaturą (±5 s / ±30 s / Home / End) i przyciskami ±15 s.
+- **Wznawianie od zapamiętanej pozycji** — sekcja „Kontynuuj" pokazuje, ile zostało.
+- **Media Session API**: tytuł, wykonawca i okładka na ekranie blokady, reakcja
+  na przycisk pauzy na słuchawkach i sterowanie z Centrum sterowania.
+
+### Mikser tła
+- Sceny ambientowe (binauralne stereo), płynny crossfade, głośność per scena.
+- Punktowe dźwięki 3D z pełnym HRTF: azymut, elewacja i odległość ustawiane na radarze
+  albo w arkuszu edycji pozycji. Twardy limit 5 jednoczesnych panerów.
+- Timer usypiania z gongiem początku i końca.
+
+### Oznakowanie i dostępność
+- Moduł logotypów KPO / UE na ekranie powitalnym i w modalu „O projekcie".
+- Cele dotykowe ≥ 44 px, widoczny fokus klawiatury, `role="slider"` na pasku postępu
+  z `aria-valuetext` podającym czas, pełna obsługa `prefers-reduced-motion`, zoom niezablokowany.
 
 ---
 
-## 🚀 Instalacja
+## 2. Architektura audio
 
-### 1. Sklonuj repozytorium
-
-```bash
-git clone https://github.com/YOUR_USERNAME/przestrzen-relaksu.git
-cd przestrzen-relaksu
-```
-
-### 2. Dodaj pliki audio
-
-Umieść pliki MP3 w odpowiedniej strukturze katalogów:
+Graf jest wspólny dla wszystkich źródeł:
 
 ```
-assets/audio/
-├── voice/
-│   ├── body-scan.mp3          # Podróż przez Ciało
-│   ├── breath-sitting.mp3     # Spokojny Oddech
-│   ├── sounds-thoughts.mp3    # Przestrzeń Myśli
-│   ├── relaxation.mp3         # Głębokie Rozluźnienie
-│   └── visualization.mp3      # Wewnętrzna Podróż
-├── scenes/
-│   ├── beach.mp3              # Plaża o Zmierzchu (stereo binaural)
-│   ├── mountain-meadow.mp3    # Górska Polana (stereo binaural)
-│   ├── summer-forest.mp3      # Letni Las (stereo binaural)
-│   └── night-cicadas.mp3      # Nocne Cykady (stereo binaural)
-└── objects/
-    ├── bell.mp3               # Tybetańska Misa (mono)
-    ├── clock.mp3              # Stary Zegar (mono)
-    ├── blackbird.mp3          # Śpiew Kosa (mono)
-    └── stream.mp3             # Leśny Strumień (mono)
+głos ──┐
+       ├─→ spatialBus ─┬─→ dryGain ──────────────────┐
+obiekty┘               └─→ reverbSend → convolver → wetGain ─┤
+                                                             ├─→ masterGain → destination
+sceny ─────────────────→ ambientBus ─────────────────────────┘
 ```
 
-> **Uwaga:** Sceny powinny być stereo (już binauralne), obiekty mono (HRTF nakładany przez aplikację).
+**Materiały długie są strumieniowane, nie dekodowane.** Głos (3–13 min) i sceny (6–12 min)
+idą przez `<audio>` + `createMediaElementSource()`. Wcześniejsze `decodeAudioData()`
+trzymało w pamięci nieskompresowany float32 — 13-minutowy plik to ~307 MB, scena ~285 MB —
+i wymagało pobrania całego pliku przed pierwszym dźwiękiem.
 
-### 3. Uruchom lokalnie
+Zmierzone (Chromium, serwer lokalny z obsługą Range): **od kliknięcia medytacji do gotowego
+odtwarzacza 7,2 s → 0,14 s**.
 
-```bash
-# Python 3
-python -m http.server 8000
+Krótsze obiekty 3D zostają na `AudioBuffer`, bo tylko `AudioBufferSourceNode` zapętla
+próbkowo dokładnie — pętla na elemencie `<audio>` ma słyszalny szew. Ich bufory są
+zwalniane przy wyłączeniu dźwięku.
 
-# Node.js
-npx serve .
-
-# PHP
-php -S localhost:8000
-```
-
-Otwórz `http://localhost:8000` w przeglądarce.
-
-### 4. Wdróż na GitHub Pages
-
-```bash
-git add .
-git commit -m "Initial commit: Przestrzeń Relaksu"
-git push origin main
-```
-
-W ustawieniach repozytorium: **Settings → Pages → Source: main branch**
-
-Aplikacja będzie dostępna pod: `https://YOUR_USERNAME.github.io/przestrzen-relaksu/`
+Głos używa panera `equalpower`, obiekty tła — `HRTF`. Na urządzeniach z ≤ 4 rdzeniami
+obiekty też schodzą na `equalpower` (tryb oszczędny wykrywany przez `hardwareConcurrency`).
 
 ---
 
-## 🎧 Wymagania Audio
+## 3. Struktura projektu
 
-### Sesje głosowe (voice/)
-- Format: MP3 (zalecane 128-192 kbps)
-- Kanały: Mono lub Stereo
-- Długość: 10-40 minut
-
-### Sceny (scenes/)
-- Format: MP3 (zalecane 192-256 kbps)
-- Kanały: **Stereo binaural** (nagrane z dummy head lub przetworzone)
-- Typ: Loopowalne (płynne przejście końca w początek)
-
-### Obiekty 3D (objects/)
-- Format: MP3 (zalecane 128 kbps)
-- Kanały: **Mono** (HRTF nakładany przez Web Audio API)
-- Typ: Loopowalne
-
----
-
-## 📱 Kompatybilność
-
-| Przeglądarka | Wsparcie |
-|--------------|----------|
-| Chrome 66+ | ✅ Pełne |
-| Firefox 61+ | ✅ Pełne |
-| Safari 14.1+ | ✅ Pełne |
-| Edge 79+ | ✅ Pełne |
-| Mobile Chrome | ✅ Pełne |
-| Mobile Safari | ✅ Pełne |
-
-> **Ważne:** Dla najlepszego efektu przestrzennego używaj słuchawek.
+```
+relaxation-mixer/
+├── index.html          # struktura widoków
+├── styles.css          # style (tokeny SAL Design Manifest v3.0)
+├── script.js           # logika: audio, biblioteka, UI, radar 3D
+├── manifest.json       # BIBLIOTEKA — tu dodaje się treści, nie w kodzie
+├── LICENSE
+└── assets/
+    ├── audio/
+    │   ├── voice/      # medytacje prowadzone
+    │   ├── scenes/     # sceny tła (binauralne stereo)
+    │   ├── objects/    # punktowe źródła 3D (mono)
+    │   └── timer/      # gongi startu i końca timera
+    ├── covers/         # okładki sesji (.webp)
+    ├── kpo-belka.jpg   # moduł logotypów KPO / UE
+    └── logo-cutout.png
+```
 
 ---
 
-## 🎨 Personalizacja
+## 4. Dodawanie treści
 
-### Zmiana kolorów
+Cała biblioteka pochodzi z `manifest.json` — **kodu nie trzeba dotykać.**
 
-Edytuj zmienne CSS w sekcji `:root`:
-
-```css
-:root {
-  --deep-void: #0a0e14;      /* Tło główne */
-  --surface: #121820;         /* Karty, panele */
-  --cyan-glow: #32b8c6;       /* Akcent główny */
-  --magenta-pulse: #c850a0;   /* Akcent sekundarny */
+```json
+{
+  "id": "nowa-sesja",
+  "title": "Nowa sesja",
+  "author": "Oskar Hamerski",
+  "group": "Mindfulness",
+  "subgroup": "Oddech",
+  "duration": "12 MIN",
+  "description": "Krótki opis widoczny w odtwarzaczu",
+  "cover": "assets/covers/nowa-sesja.webp",
+  "src": { "webm": "assets/audio/voice/nowa-sesja.webm",
+           "mp3":  "assets/audio/voice/nowa-sesja.mp3" }
 }
 ```
 
-### Dodawanie nowych sesji/scen/obiektów
+- `src.webm` jest podstawowy, `src.mp3` to zapas — aplikacja próbuje ich po kolei.
+  Jeśli pliku MP3 nie ma, pole `mp3` należy pominąć.
+- Wpis z `"_demo": true` **nie jest renderowany** — to szablon do podmiany.
+  Grupy, które przez to zostaną puste, znikają z biblioteki same.
+- Grupy i ich kolejność definiuje tablica `meditationGroups`.
 
-Rozszerz obiekt `CONFIG` w sekcji JavaScript:
+### Wymagania materiału
 
-```javascript
-const CONFIG = {
-  sessions: [
-    // Dodaj nową sesję:
-    { 
-      id: 'new-session', 
-      name: 'Nowa Sesja', 
-      icon: '🌸', 
-      file: 'assets/audio/voice/new-session.mp3',
-      description: 'Opis nowej sesji'
-    },
-    // ...
-  ],
-  // Analogicznie dla scenes i objects
-};
+| Katalog | Kanały | Uwagi |
+|---|---|---|
+| `voice/` | mono lub stereo | panoramowanie nakłada aplikacja |
+| `scenes/` | **stereo binauralne** | musi się zapętlać płynnie |
+| `objects/` | **mono** | HRTF nakłada aplikacja; musi się zapętlać płynnie |
+| `timer/` | stereo | `start` i `end`, po kilka sekund |
+
+Format podstawowy: **WebM / Opus** (mniejszy plik przy tej samej jakości).
+Fallback MP3 jest opcjonalny; jeśli jest, wystarczy 96–128 kbps.
+
+---
+
+## 5. Uruchomienie lokalne
+
+Aplikacja to statyczne pliki — potrzebny jest tylko serwer HTTP
+(otwarcie przez `file://` zablokuje `fetch` manifestu).
+
+```bash
+python3 -m http.server 8000     # albo: npx serve .
 ```
 
----
-
-## 📄 Struktura Projektu
-
-```
-przestrzen-relaksu/
-├── index.html          # Kompletna aplikacja (single file)
-├── README.md           # Dokumentacja
-├── LICENSE             # Licencja MIT
-├── preview.png         # Screenshot do README
-└── assets/
-    └── audio/
-        ├── voice/      # Sesje medytacji
-        ├── scenes/     # Krajobrazy binauralne
-        └── objects/    # Obiekty 3D
-```
+Serwer powinien obsługiwać nagłówek `Range` — bez tego `<audio>` nie przewija.
+`http.server` i `serve` to potrafią.
 
 ---
 
-## 🙏 Podziękowania
+## 6. Technologie
 
-Projekt stworzony z wykorzystaniem metodologii **Digital Art Project** — procesu łączącego wiedzę z historii sztuki cyfrowej z nowoczesnymi technikami webowymi.
-
-### Zespół Wirtualnych Specjalistów
-- **Olaf Dietrich Webart** — Koncepcja artystyczna
-- **Maya Interaction** — Architektura UX
-- **Viktor Visuelle** — System wizualny UI
-- **Coda Craft** — Implementacja front-end
-- **Lydia Content** — Strategia treści
-- **Techne Director** — Finalizacja techniczna
+- HTML5 + CSS3 + JavaScript (vanilla, bez frameworków i bez kroku budowania)
+- Web Audio API: `AudioContext`, `PannerNode` (HRTF / equalpower), `ConvolverNode`,
+  `MediaElementAudioSourceNode`
+- Media Session API
+- Canvas 2D — radar przestrzenny
+- Fonty: **Lexend** (interfejs) i **Azeret Mono** (etykiety, dane) z Google Fonts
 
 ---
 
-## 📜 Licencja
+## 7. Zgodność
 
-MIT License — szczegóły w pliku [LICENSE](LICENSE)
-
----
-
-## 🔮 Roadmapa
-
-- [ ] Reactive visuals (wizualizacja reagująca na dźwięk)
-- [ ] Generative soundscapes (proceduralne dźwięki natury)
-- [ ] Biofeedback integration (połączenie z pulsometrem)
-- [ ] Full 360° ambisonics
-- [ ] PWA z obsługą offline
-- [ ] Eksport własnych mixów
+| Przeglądarka | Wsparcie |
+|---|---|
+| Chrome / Edge 79+ | pełne |
+| Firefox 61+ | pełne (Media Session częściowo) |
+| Safari 14.1+ | pełne |
+| Mobile Safari (iOS 15+) | pełne — WebM/Opus w Web Audio od iOS 15 |
 
 ---
 
-<p align="center">
-  <strong>🎧 Wejdź w ciszę</strong><br>
-  <em>Przestrzeń Relaksu — gdzie dźwięki tworzą ciszę</em>
-</p>
+## 8. Finansowanie
+
+Sfinansowano ze środków Krajowego Planu Odbudowy i Zwiększania Odporności,
+inwestycja A2.5.1 — program stypendialny NIMIT.
+Umowa nr **143/KPO.STYPENDIA/NIMIT/2025**.
+
+---
+
+## 9. Licencja
+
+MIT — szczegóły w pliku [LICENSE](LICENSE).
