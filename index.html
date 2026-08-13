@@ -94,7 +94,7 @@
     </div>
 
     <!-- ==================== STREFA: MEDYTACJE ==================== -->
-    <main class="main-content" id="medytacje-view">
+    <main class="main-content" id="medytacje-view" role="tabpanel" aria-labelledby="btnZoneMedytacje">
 
       <!-- Powitanie -->
       <div class="home-greeting">
@@ -149,7 +149,7 @@
     </main>
 
     <!-- ==================== STREFA: MIKSER TŁA ==================== -->
-    <main class="main-content hidden-layer" id="mixer-view">
+    <main class="main-content hidden-layer" id="mixer-view" role="tabpanel" aria-labelledby="btnZoneMixer">
 
       <div class="section-header">
         <div>
@@ -192,7 +192,7 @@
     </main>
 
     <!-- ==================== PEŁNOEKRANOWY ODTWARZACZ ==================== -->
-    <main class="main-content hidden-layer" id="player-view">
+    <main class="main-content hidden-layer" id="player-view" role="region" aria-label="Odtwarzacz medytacji">
 
       <div class="player-view-header">
         <button class="btn-back" id="btnBackToHome" aria-label="Wróć do biblioteki">←</button>
@@ -321,10 +321,10 @@
 
     <!-- DOLNA NAWIGACJA — dwie strefy -->
     <nav class="bottom-nav" id="bottomNav" role="tablist" aria-label="Strefy aplikacji">
-      <button class="nav-tab active" data-zone="medytacje" id="btnZoneMedytacje" role="tab" aria-selected="true">
+      <button class="nav-tab active" data-zone="medytacje" id="btnZoneMedytacje" role="tab" aria-selected="true" aria-controls="medytacje-view">
         <span class="nav-tab-label">Medytacje</span>
       </button>
-      <button class="nav-tab" data-zone="mixer" id="btnZoneMixer" role="tab" aria-selected="false">
+      <button class="nav-tab" data-zone="mixer" id="btnZoneMixer" role="tab" aria-selected="false" aria-controls="mixer-view">
         <span class="nav-tab-label">Mikser</span>
         <span class="nav-tab-dot" id="mixerNavDot" aria-hidden="true"></span>
       </button>
