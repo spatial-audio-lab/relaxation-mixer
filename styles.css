@@ -284,8 +284,8 @@ body {
   display: none !important;
 }
 
-/* Chowanie nawigacji i mini-playera w widoku odtwarzacza */
-.app-shell.view-player .bottom-nav,
+/* Mini-player chowa się w widoku odtwarzacza (ta sama sesja) — dolna nawigacja
+   zostaje zawsze widoczna, zgodnie z prototypem (README/manifest). */
 .app-shell.view-player .mini-player {
   display: none !important;
 }
@@ -408,6 +408,86 @@ body {
   margin-top: 6px;
 }
 
+.section-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--dim);
+  flex-shrink: 0;
+}
+
+/* ========================================
+   ODTWARZACZ — nagłówek + okładka
+   ======================================== */
+.player-view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px var(--space-md);
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+}
+
+.player-view-header-title {
+  flex: 1;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.player-cover {
+  position: relative;
+  margin: 20px var(--space-md) 0;
+  aspect-ratio: 1 / 1;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  filter: saturate(0.7) contrast(1.05);
+}
+
+.player-cover-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: var(--dim);
+  filter: none;
+}
+
+/* Jedyny dozwolony gradient w narzędziu (manifest): overlay czytelności na okładce playera */
+.player-cover-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px var(--space-md);
+  background: linear-gradient(to top, rgba(10, 12, 8, 0.92), rgba(10, 12, 8, 0));
+}
+
+.player-cover-hrtf,
+.player-cover-pos {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.player-cover-hrtf.active {
+  color: var(--cyan);
+}
+
 /* ========================================
    ODTWARZACZ — karta (glass-card → panel płaski)
    ======================================== */
@@ -430,6 +510,30 @@ body {
   letter-spacing: -0.01em;
   color: var(--cream);
   padding: 22px var(--space-md) 0;
+}
+
+.player-desc {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--dim);
+  padding: 8px var(--space-md) 0;
+}
+
+.player-desc:empty {
+  display: none;
+}
+
+.player-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+  padding: 10px var(--space-md) 0;
+}
+
+.player-meta:empty {
+  display: none;
 }
 
 .player-controls {
