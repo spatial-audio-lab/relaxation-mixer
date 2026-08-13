@@ -1471,18 +1471,30 @@ function syncMeditationUI() {
     if (playBtn) playBtn.textContent = isPlaying ? '▶ TERAZ' : (isSelected ? 'PAUZA' : '→');
   });
 
-  // Okładka w pełnoekranowym odtwarzaczu
+  // Okładka w pełnoekranowym odtwarzaczu — tylko backgroundImage + widoczność fallbacku,
+  // NIGDY textContent na #playerCover: nadpisałoby to znaczniki overlayu HRTF/pozycji poniżej.
   const playerCover = document.getElementById('playerCover');
+  const playerCoverFallback = document.getElementById('playerCoverFallback');
   if (playerCover) {
     if (session?.cover) {
-      playerCover.style.background = '';
       playerCover.style.backgroundImage = `url('${session.cover}')`;
-      playerCover.textContent = '';
+      if (playerCoverFallback) playerCoverFallback.style.display = 'none';
     } else {
       playerCover.style.backgroundImage = '';
-      playerCover.style.background = '';
-      playerCover.textContent = '◈';
+      if (playerCoverFallback) playerCoverFallback.style.display = '';
     }
+  }
+
+  // Overlay czytelności: HRTF/STEREO (lewo) i pozycja głosu (prawo) — jedyny gradient w narzędziu
+  const hrtfBadge = document.getElementById('playerHrtfBadge');
+  if (hrtfBadge) {
+    hrtfBadge.textContent = state.meditation.hrtfEnabled ? 'HRTF · BINAURAL 3D' : 'STEREO';
+    hrtfBadge.classList.toggle('active', state.meditation.hrtfEnabled);
+  }
+  const posBadge = document.getElementById('playerPosBadge');
+  if (posBadge) {
+    const posLabel = { left: 'LEWA', center: 'ŚRODEK', right: 'PRAWA' }[state.meditation.position] || 'ŚRODEK';
+    posBadge.textContent = `GŁOS: ${posLabel}`;
   }
 
   // Przycisk play w karcie "Kontynuuj"
