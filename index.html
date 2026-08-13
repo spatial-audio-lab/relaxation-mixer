@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Przestrzeń Relaksu - Binauralne dźwięki 3D do medytacji i relaksacji">
   <meta name="theme-color" content="#0A0C08">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -69,7 +69,7 @@
       <div class="header-left">
         <a class="btn-hub" href="/" aria-label="Powrót do Huba Spatial Audio Lab" title="Powrót do Huba">← <span class="btn-hub-label">Hub</span></a>
         <div class="logo">
-          <span class="logo-text">Przestrzeń Relaksu</span>
+          <h1 class="logo-text">Przestrzeń Relaksu</h1>
           <span class="audio-ctx-status" id="audioCtxStatus">
             <span class="audio-ctx-dot" aria-hidden="true"></span>
             <span><span class="audio-ctx-prefix">Audio context: </span><span class="audio-ctx-label">Idle</span></span>
@@ -106,7 +106,7 @@
       <section class="home-section continue-section hidden-layer" id="continueSection">
         <div class="section-header">
           <div>
-            <div class="section-title">Kontynuuj</div>
+            <h2 class="section-title">Kontynuuj</h2>
           </div>
         </div>
         <div class="continue-row" id="continueRow"></div>
@@ -121,7 +121,7 @@
       <section class="home-section library-section">
         <div class="section-header" id="librarySectionHeader">
           <div>
-            <div class="section-title" id="librarySectionTitle">Medytacje</div>
+            <h2 class="section-title" id="librarySectionTitle">Medytacje</h2>
             <div class="section-subtitle" id="librarySectionSubtitle">Wybierz temat</div>
           </div>
           <span class="section-count" id="librarySectionCount"></span>
@@ -145,9 +145,6 @@
           Sfinansowano ze środków Krajowego Planu Odbudowy i Zwiększania Odporności.<br>
           Umowa nr <span class="app-footer-code">143/KPO.STYPENDIA/NIMIT/2025</span>
         </p>
-        <div class="kpo-banner">
-          <img src="assets/kpo-belka.jpg" alt="Logotyp Krajowy Plan Odbudowy, flaga Rzeczpospolitej Polskiej, napis „Sfinansowane przez Unię Europejską NextGenerationEU” oraz flaga Unii Europejskiej">
-        </div>
       </footer>
     </main>
 
@@ -156,7 +153,7 @@
 
       <div class="section-header">
         <div>
-          <div class="section-title">Mikser tła</div>
+          <h2 class="section-title">Mikser tła</h2>
           <div class="section-subtitle">Zbuduj własną przestrzeń dźwiękową</div>
         </div>
       </div>
@@ -212,13 +209,17 @@
       </div>
 
       <div class="glass-card player-card">
-        <div class="player-title" id="meditationTitle">Wybierz sesję</div>
+        <h2 class="player-title" id="meditationTitle">Wybierz sesję</h2>
         <div class="player-desc" id="meditationDesc"></div>
         <div class="player-meta" id="meditationMeta"></div>
 
         <div class="progress-container">
           <span class="progress-time" id="currentTime">00:00</span>
-          <div class="progress-bar" id="progressBar">
+          <div class="progress-bar" id="progressBar"
+               role="slider" tabindex="0"
+               aria-label="Postęp medytacji"
+               aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+               aria-valuetext="00:00 z 00:00">
             <div class="progress-fill" id="progressFill"></div>
           </div>
           <span class="progress-time" id="totalTime">00:00</span>

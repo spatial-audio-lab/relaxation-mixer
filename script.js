@@ -444,33 +444,39 @@ function updateAudioCtxStatus() {
   if (label) label.textContent = running ? 'Running' : 'Idle';
 }
 
-async function loadAudioBuffer(primaryUrl, fallbackUrl) {
+async function loadAudioBuffer(primaryUrl, fallbackUrl, { quiet = false } = {}) {
   const urls = [primaryUrl, fallbackUrl].filter(Boolean);
-  
+
   for (const url of urls) {
     try {
       const response = await fetch(url);
       if (!response.ok) continue;
-      
+
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await state.audioContext.decodeAudioData(arrayBuffer);
       return audioBuffer;
     } catch (e) {
-      console.warn(`Nie można załadować: ${url}`);
+      // quiet: dla zasobów opcjonalnych (gongi timera) brak pliku to nie błąd —
+      // aplikacja działa dalej, tylko bez sygnału dźwiękowego.
+      if (!quiet) console.warn(`Nie można załadować: ${url}`);
     }
   }
-  
+
   return null;
 }
 
+// Gongi timera są opcjonalne: jeśli plików nie ma, timer nadal działa (wycisza dźwięk),
+// tylko bez sygnału audio. Dlatego 'quiet' — brak pliku nie jest błędem aplikacji.
 async function loadTimerSounds() {
   state.timer.startSoundBuffer = await loadAudioBuffer(
     'assets/audio/timer/start.webm',
-    'assets/audio/timer/start.mp3'
+    'assets/audio/timer/start.mp3',
+    { quiet: true }
   );
   state.timer.endSoundBuffer = await loadAudioBuffer(
     'assets/audio/timer/end.webm',
-    'assets/audio/timer/end.mp3'
+    'assets/audio/timer/end.mp3',
+    { quiet: true }
   );
 }
 
@@ -654,6 +660,15 @@ function updateProgressBar(progress) {
   const miniFill = document.getElementById('miniProgressFill');
   if (miniFill) {
     miniFill.style.width = `${progress * 100}%`;
+  }
+
+  // Pasek jest suwakiem (role="slider") — czytnik ekranu musi dostać wartość.
+  // aria-valuetext podaje czas, bo „37 procent" nic nie mówi o miejscu w medytacji.
+  const bar = document.getElementById('progressBar');
+  if (bar) {
+    const duration = state.meditation.duration || 0;
+    bar.setAttribute('aria-valuenow', Math.round(progress * 100));
+    bar.setAttribute('aria-valuetext', `${formatTime(progress * duration)} z ${formatTime(duration)}`);
   }
 }
 
@@ -2169,6 +2184,34 @@ function setupEventHandlers() {
 
     bar.addEventListener('pointerup', endDrag);
     bar.addEventListener('pointercancel', endDrag);
+
+    // Obsługa klawiatury — bez tego przewijanie medytacji było dostępne wyłącznie
+    // myszą/dotykiem. Skoki dobrane pod materiał kilkunastominutowy.
+    bar.addEventListener('keydown', (e) => {
+      const duration = state.meditation.duration || 0;
+      if (!state.meditation.buffer || duration <= 0) return;
+
+      const current = state.meditation.isPlaying
+        ? state.audioContext.currentTime - state.meditation.startTime
+        : state.meditation.pauseTime;
+
+      let target = null;
+      switch (e.key) {
+        case 'ArrowRight':
+        case 'ArrowUp':    target = current + 5; break;
+        case 'ArrowLeft':
+        case 'ArrowDown':  target = current - 5; break;
+        case 'PageUp':     target = current + 30; break;
+        case 'PageDown':   target = current - 30; break;
+        case 'Home':       target = 0; break;
+        case 'End':        target = Math.max(0, duration - 1); break;
+        default: return;
+      }
+
+      e.preventDefault();
+      target = Math.min(duration, Math.max(0, target));
+      commitSeek(target / duration);
+    });
   })();
   
   // === Space Controls ===
@@ -2304,6 +2347,14 @@ function setupEventHandlers() {
 
       // Karty obsługiwane przez delegację 'click' na kontenerze — symulacja kliknięcia wystarcza
       if (target.matches('.tile, .file-card, .continue-card, .item-card:not(.sound-card)')) {
+        e.preventDefault();
+        target.click();
+        return;
+      }
+
+      // Przełączniki role="switch" (3D, synchronizacja) — div z tabindex nie emituje
+      // 'click' na Enter, więc bez tego są dla klawiatury martwe mimo poprawnego ARIA
+      if (target.matches('.toggle-switch')) {
         e.preventDefault();
         target.click();
         return;
