@@ -261,31 +261,17 @@ function formatTime(seconds) {
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
-// --- Generowane okładki (Faza 3 — brak pliku cover → deterministyczny gradient) ---
 const EQ_BARS_HTML = '<span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span>';
 
-function hashString(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
-  }
-  return hash;
-}
-
-function coverGradient(id) {
-  const hash = hashString(id || 'default');
-  const hue1 = hash % 360;
-  const hue2 = (hue1 + 40 + ((hash >> 8) % 70)) % 360;
-  return `linear-gradient(135deg, hsl(${hue1} 65% 42%), hsl(${hue2} 60% 24%))`;
-}
-
+// SAL manifest sekcja 09: brak generowanych gradientów jako dekoracji —
+// okładka bez pliku to płaskie tło panelu + neutralny znak zastępczy ◈.
 function coverStyleAttr(item) {
   if (item.cover) return `background-image:url('${item.cover}')`;
-  return `background:${coverGradient(item.id)}`;
+  return '';
 }
 
 function coverContent(item) {
-  return item.cover ? '' : `<span class="cover-icon">${item.icon}</span>`;
+  return item.cover ? '' : `<span class="cover-icon">◈</span>`;
 }
 
 // --- Ostatnio odtwarzana medytacja (sekcja "Kontynuuj") ---
@@ -432,16 +418,30 @@ async function initAudioContext() {
     state.meditation.gainNode.connect(state.meditation.pannerNode);
     
     updateMeditationPosition(state.meditation.position);
-    
+
+    // Status w nagłówku (manifest sekcja 08: zawsze widoczny Audio Context: Running/Idle)
+    state.audioContext.onstatechange = updateAudioCtxStatus;
+    updateAudioCtxStatus();
+
     console.log('🎧 Audio context zainicjalizowany');
-    
+
     // Załaduj dźwięki timera
     loadTimerSounds();
-    
+
   } catch (error) {
     console.error('Błąd inicjalizacji audio:', error);
     showStatus('Nie można uruchomić audio', 3000);
   }
+}
+
+// Wskaźnik w nagłówku: kropka + etykieta RUNNING/IDLE (manifest sekcja 08, README sekcja 2)
+function updateAudioCtxStatus() {
+  const el = document.getElementById('audioCtxStatus');
+  if (!el) return;
+  const running = !!(state.audioContext && state.audioContext.state === 'running');
+  el.classList.toggle('running', running);
+  const label = el.querySelector('.audio-ctx-label');
+  if (label) label.textContent = running ? 'Running' : 'Idle';
 }
 
 async function loadAudioBuffer(primaryUrl, fallbackUrl) {
@@ -1203,8 +1203,7 @@ function renderLibraryGroups() {
   if (!container) return;
   const groups = [...libraryTree.values()];
   container.innerHTML = groups.map((g, i) => `
-    <div class="tile" data-group="${g.id}" style="--i:${i}" tabindex="0" role="button" aria-label="Temat: ${g.title}, ${sessionsLabel(countGroup(g))}">
-      <div class="tile-cover cover-art"><span class="cover-icon">${g.icon}</span></div>
+    <div class="tile" data-group="${g.id}" data-index="${String(i + 1).padStart(2, '0')}" style="--i:${i}" tabindex="0" role="button" aria-label="Temat: ${g.title}, ${sessionsLabel(countGroup(g))}">
       <div class="tile-title">${g.title}</div>
       <div class="tile-meta">${sessionsLabel(countGroup(g))}</div>
     </div>
@@ -1220,16 +1219,15 @@ function renderLibrarySubgroups(groupId) {
   // Pliki bez podgrupy (jeśli grupa ma jednocześnie podgrupy i pliki luzem)
   if (node.direct.length > 0) {
     tiles.push(`
-      <div class="tile" data-group="${groupId}" data-direct="1" style="--i:0" tabindex="0" role="button" aria-label="Ogólne, ${sessionsLabel(node.direct.length)}">
-        <div class="tile-cover cover-art"><span class="cover-icon">${node.icon}</span></div>
+      <div class="tile" data-group="${groupId}" data-direct="1" data-index="01" style="--i:0" tabindex="0" role="button" aria-label="Ogólne, ${sessionsLabel(node.direct.length)}">
         <div class="tile-title">Ogólne</div>
         <div class="tile-meta">${sessionsLabel(node.direct.length)}</div>
       </div>`);
   }
   [...node.subgroups.entries()].forEach(([subId, arr], idx) => {
+    const n = idx + (node.direct.length > 0 ? 2 : 1);
     tiles.push(`
-      <div class="tile" data-group="${groupId}" data-subgroup="${subId}" style="--i:${idx + 1}" tabindex="0" role="button" aria-label="Podtemat: ${subId}, ${sessionsLabel(arr.length)}">
-        <div class="tile-cover cover-art"><span class="cover-icon">${node.icon}</span></div>
+      <div class="tile" data-group="${groupId}" data-subgroup="${subId}" data-index="${String(n).padStart(2, '0')}" style="--i:${idx + 1}" tabindex="0" role="button" aria-label="Podtemat: ${subId}, ${sessionsLabel(arr.length)}">
         <div class="tile-title">${subId}</div>
         <div class="tile-meta">${sessionsLabel(arr.length)}</div>
       </div>`);
@@ -1247,7 +1245,7 @@ function fileCardHTML(s, i) {
         <div class="file-card-title">${s.name}</div>
         <div class="file-card-meta">${s.duration || 'Medytacja'}${s.description ? ' • ' + s.description : ''}</div>
       </div>
-      <button class="file-card-play" data-id="${s.id}" aria-label="Odtwórz ${s.name}">${isPlaying ? '⏸' : '▶'}</button>
+      <button class="file-card-play" data-id="${s.id}" aria-label="Odtwórz ${s.name}">${isPlaying ? '▶ TERAZ' : (isSelected ? 'PAUZA' : '→')}</button>
     </div>`;
 }
 
@@ -1346,11 +1344,11 @@ function renderSpaceList() {
         <div class="item-name">${scene.name}</div>
         <div class="item-desc">${scene.description}</div>
         <div class="item-inline-volume">
-          <span class="item-inline-volume-icon">🔊</span>
           <input type="range" class="inline-volume-slider" min="0" max="100" value="${vol}" aria-label="Głośność: ${scene.name}">
+          <span class="item-inline-volume-value">${vol}%</span>
         </div>
       </div>
-      <div class="item-status" aria-hidden="true">${EQ_BARS_HTML}</div>
+      <span class="item-state">CISZA</span>
     </div>
   `;
   }).join('');
@@ -1361,16 +1359,16 @@ function renderSoundsList() {
   if (!container) return;
 
   container.innerHTML = CONFIG.objects.map((obj, i) => {
+    const st = state.sounds.objects[obj.id];
+    const pos3d = st?.position3d || { azimuth: 0, elevation: 0, distance: 20 };
     return `
     <div class="item-card sound-card" data-id="${obj.id}" style="--i:${i}" role="group" aria-label="Dźwięk 3D: ${obj.name}">
       <button type="button" class="sound-toggle" data-id="${obj.id}" role="switch" aria-checked="false" aria-label="Włącz lub wyłącz: ${obj.name}">⏻</button>
-      <div class="item-icon cover-art" style="${coverStyleAttr(obj)}">${coverContent(obj)}</div>
       <div class="item-info">
         <div class="item-name">${obj.name}</div>
-        <div class="item-desc">Dotknij, by ustawić w przestrzeni</div>
+        <div class="item-desc" data-role="pos3d-meta">${Math.round(pos3d.azimuth)}° · ${Math.round(pos3d.distance)}m · ${pos3d.elevation >= 0 ? '+' : ''}${Math.round(pos3d.elevation)}°</div>
       </div>
       <button type="button" class="btn-3d-position" data-id="${obj.id}" aria-label="Ustaw pozycję 3D: ${obj.name}" title="Pozycja 3D">⚙</button>
-      <div class="item-status" aria-hidden="true">${EQ_BARS_HTML}</div>
     </div>
   `;
   }).join('');
@@ -1410,7 +1408,7 @@ function renderContinueSection() {
       <div class="continue-card-cover cover-art" style="${coverStyleAttr(session)}">${coverContent(session)}</div>
       <div class="continue-card-info">
         <div class="continue-card-title">${session.name}</div>
-        <div class="continue-card-meta">${session.duration || 'Medytacja'}</div>
+        <div class="continue-card-meta">${session.duration || 'Medytacja'}${session.group ? ' · ' + session.group : ''}</div>
       </div>
       <button class="continue-card-play" aria-label="Odtwórz ${session.name}">▶</button>
     </div>
@@ -1423,6 +1421,7 @@ function syncAllUI() {
   syncSoundsUI();
   syncMiniPlayer();
   updateMixerBadge();
+  updateAudioCtxStatus();
   drawVisualization();
 }
 
@@ -1439,7 +1438,7 @@ function syncMeditationUI() {
     card.classList.toggle('playing', isPlaying);
 
     const playBtn = card.querySelector('.file-card-play');
-    if (playBtn) playBtn.textContent = isPlaying ? '⏸' : '▶';
+    if (playBtn) playBtn.textContent = isPlaying ? '▶ TERAZ' : (isSelected ? 'PAUZA' : '→');
   });
 
   // Okładka w pełnoekranowym odtwarzaczu
@@ -1451,8 +1450,8 @@ function syncMeditationUI() {
       playerCover.textContent = '';
     } else {
       playerCover.style.backgroundImage = '';
-      playerCover.style.background = session ? coverGradient(session.id) : '';
-      playerCover.textContent = session?.icon || '🧘';
+      playerCover.style.background = '';
+      playerCover.textContent = '◈';
     }
   }
 
@@ -1512,8 +1511,8 @@ function syncMiniPlayer() {
       cover.textContent = '';
     } else {
       cover.style.backgroundImage = '';
-      cover.style.background = session ? coverGradient(session.id) : '';
-      cover.textContent = session?.icon || '🧘';
+      cover.style.background = '';
+      cover.textContent = '◈';
     }
   }
 
@@ -1556,10 +1555,16 @@ function syncSpaceUI() {
 
     // Inline suwak głośności (widoczny tylko dla aktywnej karty)
     const slider = card.querySelector('.inline-volume-slider');
+    const vol = Math.round((state.space.volumes[id] ?? 0.5) * 100);
     if (slider && document.activeElement !== slider) {
-      const vol = state.space.volumes[id] ?? 0.5;
-      slider.value = Math.round(vol * 100);
+      slider.value = vol;
     }
+    const volValue = card.querySelector('.item-inline-volume-value');
+    if (volValue) volValue.textContent = `${vol}%`;
+
+    // Stan tekstowy: AKTYWNA (cyan) / CISZA (dim) — manifest: wartość zawsze widoczna
+    const stateEl = card.querySelector('.item-state');
+    if (stateEl) stateEl.textContent = isActive ? 'AKTYWNA' : 'CISZA';
   });
 
   // Rząd "Przestrzenie" na Home
@@ -1589,6 +1594,13 @@ function syncSoundsUI() {
     if (toggle) {
       toggle.setAttribute('aria-checked', String(enabled));
       toggle.setAttribute('aria-busy', String(loading));
+    }
+
+    // Odczyt pozycji zawsze widoczny liczbowo (manifest sekcja 06)
+    const meta = card.querySelector('[data-role="pos3d-meta"]');
+    if (meta && objState?.position3d) {
+      const p = objState.position3d;
+      meta.textContent = `${Math.round(p.azimuth)}° · ${Math.round(p.distance)}m · ${p.elevation >= 0 ? '+' : ''}${Math.round(p.elevation)}°`;
     }
   });
 }
@@ -1643,103 +1655,79 @@ function drawVisualization() {
   
   if (maxRadius <= 0) return;
   
-  // Background
-  ctx.fillStyle = '#0f1923';
+  // Tło — SAL manifest: panel na tle --bg2
+  ctx.fillStyle = '#12150F';
   ctx.fillRect(0, 0, w, h);
-  
-  // Radial grid
-  ctx.strokeStyle = 'rgba(52, 211, 153, 0.12)';
+
+  // Krzyż przez środek + trzy pierścienie (28% / 57% / 86%), 1px --border
+  ctx.strokeStyle = 'rgba(240, 235, 224, 0.08)';
   ctx.lineWidth = 1;
-  const step = maxRadius * 0.25;
-  if (step > 0) {
-    for (let r = step; r <= maxRadius; r += step) {
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-  }
-  
-  // Direction lines
-  ctx.strokeStyle = 'rgba(52, 211, 153, 0.2)';
-  ctx.lineWidth = 1.5;
-  const directions = [
-    { angle: 0, label: 'N' },
-    { angle: 90, label: 'E' },
-    { angle: 180, label: 'S' },
-    { angle: 270, label: 'W' }
-  ];
-  
-  directions.forEach(dir => {
-    const rad = (dir.angle * Math.PI) / 180;
-    const x = centerX + maxRadius * Math.sin(rad);
-    const y = centerY - maxRadius * Math.cos(rad);
-    
-    ctx.beginPath();
-    ctx.moveTo(centerX, centerY);
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    
-    // Label
-    const labelX = centerX + (maxRadius + 15) * Math.sin(rad);
-    const labelY = centerY - (maxRadius + 15) * Math.cos(rad);
-    ctx.fillStyle = 'rgba(52, 211, 153, 0.5)';
-    ctx.font = 'bold 11px Outfit, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(dir.label, labelX, labelY);
-  });
-  
-  // Listener (center)
-  ctx.fillStyle = '#34d399';
   ctx.beginPath();
-  ctx.arc(centerX, centerY, 14, 0, Math.PI * 2);
-  ctx.fill();
-  
+  ctx.moveTo(centerX, 0);
+  ctx.lineTo(centerX, h);
+  ctx.moveTo(0, centerY);
+  ctx.lineTo(w, centerY);
+  ctx.stroke();
+
+  [0.28, 0.57, 0.86].forEach(f => {
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, maxRadius * f, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+
+  // Etykiety kierunków — PRZÓD/TYŁ/L/R, mono, --dim
+  ctx.fillStyle = 'rgba(156, 152, 144, 0.9)';
+  ctx.font = '9px "Azeret Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('PRZÓD 0°', centerX, 10);
+  ctx.fillText('TYŁ 180°', centerX, h - 10);
+  ctx.textAlign = 'left';
+  ctx.fillText('L', 8, centerY);
+  ctx.textAlign = 'right';
+  ctx.fillText('R', w - 8, centerY);
+
+  // Słuchacz (środek) — znak typograficzny ◉ w cyan, bez wypełnionego kółka
+  ctx.fillStyle = '#00E5CC';
   ctx.font = '16px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('👤', centerX, centerY);
-  
-  // Draw objects
+  ctx.fillText('◉', centerX, centerY);
+
+  // Obiekty 3D — okrąg z obrysem (amber gdy aktywny, dim gdy nie) + znak ◈ + etykieta
   CONFIG.objects.forEach(obj => {
     const objState = state.sounds.objects[obj.id];
     if (!objState.enabled) return;
-    
+
     const pos3d = objState.position3d;
     const rad = (pos3d.azimuth * Math.PI) / 180;
     const visualRadius = (pos3d.distance / 100) * maxRadius;
     const x = centerX + visualRadius * Math.sin(rad);
     const y = centerY - visualRadius * Math.cos(rad);
-    
+
     const isSelected = state.sounds.selectedObjectId === obj.id;
-    
-    // Object circle
-    ctx.fillStyle = isSelected ? '#c850a0' : '#34d399';
+    const accent = objState.enabled ? '#FFAB00' : '#9C9890';
+
+    ctx.fillStyle = 'rgba(10, 12, 8, 0.55)';
+    ctx.strokeStyle = isSelected ? '#00E5CC' : accent;
+    ctx.lineWidth = isSelected ? 2 : 1;
     ctx.beginPath();
-    ctx.arc(x, y, 16, 0, Math.PI * 2);
+    ctx.arc(x, y, 22, 0, Math.PI * 2);
     ctx.fill();
-    
-    // Glow for selected
-    if (isSelected) {
-      ctx.strokeStyle = 'rgba(200, 80, 160, 0.5)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(x, y, 22, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    
-    // Icon
-    ctx.font = '18px sans-serif';
+    ctx.stroke();
+
+    ctx.fillStyle = accent;
+    ctx.font = '13px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(obj.icon, x, y);
-    
-    // Elevation indicator
-    if (pos3d.elevation !== 0) {
-      ctx.fillStyle = pos3d.elevation > 0 ? '#ffdd00' : '#00ddff';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.fillText(pos3d.elevation > 0 ? '↑' : '↓', x + 16, y - 16);
-    }
+    ctx.fillText('◈', x, y);
+
+    // Podpis nazwy — poniżej gdy źródło w dolnej połowie, powyżej gdy w górnej
+    const below = y >= centerY;
+    const labelY = below ? y + 30 : y - 30;
+    ctx.fillStyle = 'rgba(156, 152, 144, 0.9)';
+    ctx.font = '9px "Azeret Mono", monospace';
+    ctx.fillText(obj.name, x, labelY);
   });
 }
 
