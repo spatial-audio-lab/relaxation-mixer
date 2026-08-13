@@ -2,9 +2,9 @@
   "_comment": "Jedno zrodlo prawdy dla biblioteki. Aby dodac medytacje: (1) wrzuc pliki audio do assets/audio/voice/ (najlepiej .webm + .mp3), (2) opcjonalnie okladke do assets/covers/, (3) dopisz wpis ponizej z polami 'group' i opcjonalnie 'subgroup'. Aplikacja renderuje TYLKO to, co jest w tym pliku i grupuje medytacje wg pol group/subgroup. Nowy temat: dodaj go do 'meditationGroups' (ikona + kolejnosc). Wpisy oznaczone \"_demo\": true wskazuja istniejacy plik body-scan tylko po to, by nawigacja byla testowalna — podmien je lub usun.",
 
   "meditationGroups": [
-    { "id": "Mindfulness",       "title": "Mindfulness",       "icon": "🧘", "order": 1 },
-    { "id": "Aktorstwo",         "title": "Aktorstwo",         "icon": "🎭", "order": 2 },
-    { "id": "Medytacja w ruchu", "title": "Medytacja w ruchu", "icon": "🚶", "order": 3 }
+    { "id": "Mindfulness",       "title": "Mindfulness", "order": 1 },
+    { "id": "Aktorstwo",         "title": "Aktorstwo", "order": 2 },
+    { "id": "Medytacja w ruchu", "title": "Medytacja w ruchu", "order": 3 }
   ],
 
   "meditations": [
@@ -13,7 +13,6 @@
       "title": "Podróż przez ciało",
       "group": "Mindfulness",
       "author": "",
-      "icon": "🧘",
       "description": "Delikatna wędrówka uwagi przez każdą część ciała",
       "duration": "15 min",
       "cover": "assets/covers/body-scanx.webp",
@@ -28,7 +27,6 @@
       "title": "Oddech w ciele",
       "group": "Mindfulness",
       "author": "",
-      "icon": "🧘",
       "description": "Uważna obserwacja oddechu i jego ruchu w ciele",
       "duration": "8 min",
       "cover": "assets/covers/oddechx.webp",
@@ -43,7 +41,6 @@
       "title": "3-stopniowa przestrzeń na oddech",
       "group": "Mindfulness",
       "author": "",
-      "icon": "🧘",
       "description": "Trzy kroki: zauważenie, skupienie na oddechu i powrót do całego ciała",
       "duration": "3 min",
       "cover": "assets/covers/3-stop.webp",
@@ -58,7 +55,6 @@
       "title": "Uważne chodzenie",
       "group": "Mindfulness",
       "author": "Oskar Hamerski",
-      "icon": "🧘",
       "description": "Medytacja w ruchu",
       "duration": "10 min",
       "cover": "assets/covers/uwazne-chodzenie.webp",
@@ -73,7 +69,6 @@
       "title": "Praca z dyskomfortem",
       "group": "Mindfulness",
       "author": "Oskar Hamerski",
-      "icon": "🧘",
       "description": "Medytacja, która uczy uczy jak z ciekawością radzić sobie z fizycznym dyskomfortem oraz budować spokój poprzez akceptację chwili obecnej.",
       "duration": "11 min",
       "cover": "assets/covers/praca-z-dyskomfortem.webp",
@@ -89,7 +84,6 @@
       "title": "Poczucie całości",
       "group": "Aktorstwo",
       "subgroup": "Michaił Czechow",
-      "icon": "🎭",
       "description": "DEMO — podmień plik i opis",
       "duration": "15 min",
       "cover": "",
@@ -105,7 +99,6 @@
       "title": "Promieniowanie",
       "group": "Aktorstwo",
       "subgroup": "Michaił Czechow",
-      "icon": "🎭",
       "description": "DEMO — podmień plik i opis",
       "duration": "15 min",
       "cover": "",
@@ -121,7 +114,6 @@
       "title": "Powtórzenia",
       "group": "Aktorstwo",
       "subgroup": "Meisner",
-      "icon": "🎭",
       "description": "DEMO — podmień plik i opis",
       "duration": "15 min",
       "cover": "",
@@ -136,7 +128,6 @@
       "_demo": true,
       "title": "Uważny ruch",
       "group": "Medytacja w ruchu",
-      "icon": "🚶",
       "description": "DEMO — podmień plik i opis",
       "duration": "15 min",
       "cover": "",
@@ -152,7 +143,6 @@
     {
       "id": "beach",
       "title": "Plaża",
-      "icon": "🏖️",
       "description": "Ciepły piasek, delikatne fale, śpiew mew",
       "cover": "",
       "src": {
@@ -163,7 +153,6 @@
     {
       "id": "mountain-meadow",
       "title": "Polana",
-      "icon": "🏔️",
       "description": "Szum wiatru w trawach, przestrzeń i cisza",
       "cover": "",
       "src": {
@@ -174,7 +163,6 @@
     {
       "id": "summer-forest",
       "title": "Las",
-      "icon": "🌲",
       "description": "Szelest liści, śpiew ptaków, zapach żywicy",
       "cover": "",
       "src": {
@@ -185,7 +173,6 @@
     {
       "id": "night-cicadas",
       "title": "Cykady",
-      "icon": "🌙",
       "description": "Ciepła letnia noc, rytmiczny chór owadów",
       "cover": "",
       "src": {
@@ -199,7 +186,6 @@
     {
       "id": "bell",
       "title": "Misa tybetańska",
-      "icon": "🔔",
       "description": "Rezonujący dźwięk prowadzący do skupienia",
       "cover": "",
       "src": {
@@ -211,7 +197,6 @@
     {
       "id": "blackbird",
       "title": "Kos",
-      "icon": "🐦",
       "description": "Melodia poranka, naturalny budzik duszy",
       "cover": "",
       "src": {
@@ -223,7 +208,6 @@
     {
       "id": "stream",
       "title": "Strumień",
-      "icon": "💧",
       "description": "Nieustanny przepływ, symbol puszczania",
       "cover": "",
       "src": {
