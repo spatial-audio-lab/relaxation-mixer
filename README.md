@@ -73,6 +73,9 @@ relaxation-mixer/
 ├── styles.css          # style (tokeny SAL Design Manifest v3.0)
 ├── script.js           # logika: audio, biblioteka, UI, radar 3D
 ├── manifest.json       # BIBLIOTEKA — tu dodaje się treści, nie w kodzie
+├── app.webmanifest     # MANIFEST APLIKACJI (PWA) — to co innego niż powyższy
+├── favicon.svg
+├── favicon.ico
 ├── LICENSE
 └── assets/
     ├── audio/
@@ -80,10 +83,29 @@ relaxation-mixer/
     │   ├── scenes/     # sceny tła (binauralne stereo)
     │   ├── objects/    # punktowe źródła 3D (mono)
     │   └── timer/      # gongi startu i końca timera
+    ├── brand/          # ikony (wspólny pakiet marki Spatial Audio Lab)
     ├── covers/         # okładki sesji (.webp)
     ├── kpo-belka.jpg   # moduł logotypów KPO / UE
     └── logo-cutout.png
 ```
+
+**Dwa pliki o mylnie podobnych nazwach**: `manifest.json` to biblioteka medytacji
+(treść aplikacji), a `app.webmanifest` to manifest instalacyjny PWA (nazwa, kolory, ikony).
+Nie mylić przy edycji.
+
+### Instalacja na ekranie głównym
+
+Aplikacja jest instalowalna: `app.webmanifest` + pakiet ikon dają właściwą ikonę, nazwę
+i uruchamianie na pełnym ekranie (`display: standalone`), zamiast pustego kwadratu
+i paska przeglądarki. Ikony: 192 i 512 px `purpose: any` (pełne pole, ostre krawędzie
+zgodnie z manifestem) oraz 512 px `purpose: maskable` z zapasem na przycięcie do koła
+lub squircle'a przez Androida.
+
+**Aplikacja nie działa offline** — nie ma service workera. Instalacja daje wygodę
+uruchamiania, nie tryb samolotowy.
+
+`scope` to katalog aplikacji, więc przycisk `← Hub` wychodzi poza zakres i otwiera Hub
+w przeglądarce — celowo, bo Hub jest osobnym miejscem, nie ekranem tej aplikacji.
 
 ---
 

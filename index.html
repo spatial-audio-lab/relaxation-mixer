@@ -5,9 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Przestrzeń Relaksu - Binauralne dźwięki 3D do medytacji i relaksacji">
   <meta name="theme-color" content="#0A0C08">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- Nazwa pod ikoną na ekranie głównym iOS (inaczej Safari bierze <title>, który jest za długi) -->
+  <meta name="apple-mobile-web-app-title" content="Przestrzeń">
   <title>Przestrzeń Relaksu — Binaural Mixer</title>
+
+  <!-- Instalowalność: manifest aplikacji.
+       UWAGA na nazwę — manifest.json to plik BIBLIOTEKI medytacji, nie manifest PWA. -->
+  <link rel="manifest" href="app.webmanifest">
+
+  <!-- Ikony (pakiet marki wspólny z pozostałymi narzędziami Spatial Audio Lab) -->
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="alternate icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/brand/favicon-16x16.png">
+  <link rel="apple-touch-icon" href="assets/brand/apple-touch-icon.png">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
