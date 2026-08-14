@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Przestrzeń Relaksu — edytor presetów</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg:#0A0C08; --panel:#141810; --line:#2A3020; --ink:#E8EAE2; --dim:#9C9890;
+    --cyan:#00E5CC; --amber:#FFAB00;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-size:15px;
+         font-family:'Lexend',system-ui,-apple-system,'Segoe UI',sans-serif; line-height:1.5; }
+  header { padding:1.25rem 1.5rem .75rem; border-bottom:1px solid var(--line); }
+  h1 { font-size:1.25rem; margin:0 0 .2rem; }
+  .sub { color:var(--dim); font-size:.85rem; margin:0; }
+  .mono { font-family:'Azeret Mono',ui-monospace,'SF Mono',Consolas,monospace; }
+
+  .wrap { display:grid; grid-template-columns:minmax(360px,1fr) minmax(320px,420px); gap:1.5rem;
+          padding:1.5rem; align-items:start; }
+  @media (max-width:900px) { .wrap { grid-template-columns:1fr; } }
+
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:.75rem;
+           padding:1.1rem 1.25rem; margin-bottom:1.25rem; }
+  .panel h2 { font-size:.78rem; letter-spacing:.09em; text-transform:uppercase;
+              color:var(--dim); margin:0 0 .9rem; font-weight:600; }
+
+  label { display:block; font-size:.82rem; color:var(--dim); margin-bottom:.2rem; }
+  select, input[type=text], input[type=number] {
+    width:100%; background:#0E1109; color:var(--ink); border:1px solid var(--line);
+    border-radius:.4rem; padding:.5rem .6rem; font:inherit; font-size:.88rem; min-height:40px;
+  }
+  .row { display:flex; align-items:center; gap:.7rem; margin-bottom:.85rem; }
+  .row:last-child { margin-bottom:0; }
+  .row .name { flex:0 0 9.5rem; font-size:.85rem; }
+  .row input[type=range] { flex:1; min-width:0; accent-color:var(--amber); height:28px; }
+  .row .val { flex:0 0 4.6rem; text-align:right; font-size:.82rem; color:var(--amber);
+              font-family:'Azeret Mono',monospace; }
+  .hint { font-size:.76rem; color:var(--dim); margin:.35rem 0 0; }
+
+  button { font:inherit; font-size:.88rem; padding:.6rem 1rem; border-radius:.5rem;
+           border:1px solid var(--line); background:#1B2113; color:var(--ink);
+           cursor:pointer; min-height:44px; }
+  button.primary { background:var(--amber); border-color:var(--amber); color:#1A1200; font-weight:600; }
+  button.cyan { background:transparent; border-color:var(--cyan); color:var(--cyan); }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  button:focus-visible { outline:2px solid var(--cyan); outline-offset:2px; }
+  .btns { display:flex; flex-wrap:wrap; gap:.6rem; }
+
+  canvas { width:100%; max-width:400px; aspect-ratio:1; display:block; margin:0 auto .6rem;
+           background:#0E1109; border:1px solid var(--line); border-radius:.6rem;
+           touch-action:none; cursor:grab; }
+  canvas.drag { cursor:grabbing; }
+
+  table.objs { width:100%; border-collapse:collapse; margin-bottom:.6rem; }
+  table.objs th, table.objs td { padding:.4rem .35rem; border-bottom:1px solid var(--line);
+                                 font-size:.8rem; text-align:left; }
+  table.objs th { color:var(--dim); font-weight:600; }
+  table.objs tr.sel td { background:rgba(0,229,204,.07); }
+  table.objs td button { padding:.25rem .5rem; min-height:32px; font-size:.75rem; }
+
+  #log { background:#0E1109; border:1px solid var(--line); border-radius:.5rem; padding:.8rem;
+         font-family:'Azeret Mono',monospace; font-size:.76rem; color:#B9C2B0;
+         max-height:12rem; overflow:auto; white-space:pre-wrap; }
+  .ok { color:#7EE2A8; } .err { color:#FF8F8F; }
+  .transport { display:flex; align-items:center; gap:.7rem; flex-wrap:wrap; }
+  .time { font-family:'Azeret Mono',monospace; font-size:.85rem; color:var(--cyan); min-width:5.5rem; }
+  .warn { background:rgba(255,171,0,.08); border:1px solid rgba(255,171,0,.35);
+          border-radius:.5rem; padding:.7rem .9rem; font-size:.82rem; margin-bottom:1.25rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Przestrzeń Relaksu — edytor presetów</h1>
+  <p class="sub">Strojenie parametrów uchem, na żywo. Ten sam graf audio co w renderze.
+     <strong>Wymaga słuchawek.</strong></p>
+</header>
+
+<div class="wrap">
+  <div>
+    <div class="panel">
+      <h2>Preset</h2>
+      <div class="row" style="margin-bottom:.9rem">
+        <span class="name">Medytacja</span>
+        <select id="presetSel" style="flex:1"></select>
+      </div>
+      <div class="transport">
+        <button id="playBtn" class="primary">▶ Podsłuch</button>
+        <span class="time" id="timeLbl">–:–– / –:––</span>
+        <label style="margin:0; display:flex; align-items:center; gap:.4rem;">
+          <span>start od</span>
+          <input type="number" id="startAt" value="120" min="0" step="10"
+                 style="width:5.5rem" aria-label="Start podsłuchu w sekundach">
+          <span>s</span>
+        </label>
+      </div>
+      <p class="hint">Podsłuch startuje od podanej sekundy — przy medytacji okolice drugiej minuty
+        to miejsce, gdzie słychać i mowę, i tło. Zmiana medytacji zatrzymuje podsłuch.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Parametry globalne</h2>
+      <div class="row"><span class="name">master</span>
+        <input type="range" id="master" min="0" max="1" step="0.01"><span class="val" id="masterV"></span></div>
+      <div class="row"><span class="name">dry</span>
+        <input type="range" id="dry" min="0" max="1" step="0.01"><span class="val" id="dryV"></span></div>
+      <div class="row"><span class="name">wet (pogłos)</span>
+        <input type="range" id="wet" min="0" max="0.6" step="0.005"><span class="val" id="wetV"></span></div>
+      <div class="row"><span class="name">pogłos: długość</span>
+        <input type="range" id="revDur" min="0.2" max="6" step="0.1"><span class="val" id="revDurV"></span></div>
+      <div class="row"><span class="name">pogłos: zanikanie</span>
+        <input type="range" id="revDec" min="0.5" max="8" step="0.1"><span class="val" id="revDecV"></span></div>
+      <p class="hint">Długość i zanikanie pogłosu przebudowują odpowiedź impulsową —
+        w podsłuchu słychać to z ułamkiem sekundy opóźnienia.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Głos</h2>
+      <div class="row"><span class="name">głośność</span>
+        <input type="range" id="voiceVol" min="0" max="1.5" step="0.01"><span class="val" id="voiceVolV"></span></div>
+      <div class="row"><span class="name">pozycja</span>
+        <select id="voicePos" style="flex:1">
+          <option value="left">lewo</option>
+          <option value="center">środek</option>
+          <option value="right">prawo</option>
+        </select></div>
+      <p class="hint">Głos idzie przez panner <span class="mono">equalpower</span>, nie HRTF —
+        generyczny HRTF przeglądarki filtruje górę pasma i zmienia barwę mowy.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Scena tła</h2>
+      <div class="row"><span class="name">scena</span>
+        <select id="sceneSel" style="flex:1"></select></div>
+      <div class="row"><span class="name">głośność</span>
+        <input type="range" id="sceneVol" min="0" max="1" step="0.01"><span class="val" id="sceneVolV"></span></div>
+      <p class="hint">Sceny są binauralnym stereo i idą prosto na magistralę tła, bez panera
+        i bez pogłosu. Zmiana sceny wymaga restartu podsłuchu.</p>
+    </div>
+  </div>
+
+  <div>
+    <div class="panel">
+      <h2>Obiekty punktowe 3D</h2>
+      <canvas id="radar" width="400" height="400"
+              aria-label="Radar przestrzenny — przeciągnij obiekt, aby zmienić azymut i odległość"></canvas>
+      <table class="objs"><thead><tr>
+        <th>obiekt</th><th>azymut</th><th>odl.</th><th>elew.</th><th>głoś.</th><th></th>
+      </tr></thead><tbody id="objBody"></tbody></table>
+      <div class="btns" style="margin-bottom:.8rem">
+        <select id="addSel" style="flex:1; min-width:9rem"></select>
+        <button id="addBtn">Dodaj obiekt</button>
+      </div>
+      <div id="objEdit"></div>
+      <p class="hint">Przeciąganie na radarze zmienia azymut i odległość. Elewację i głośność
+        ustawiasz suwakami po wybraniu obiektu. Limit w aplikacji to 5 jednoczesnych panerów.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Wyjście</h2>
+      <div class="btns" style="margin-bottom:.8rem">
+        <button id="fragBtn" class="cyan">Render fragmentu (20 s)</button>
+        <button id="renderBtn" class="primary">Render pełny + META</button>
+      </div>
+      <div class="btns">
+        <button id="exportBtn">Pobierz presets.json</button>
+        <button id="metaBtn">Pobierz META.txt</button>
+      </div>
+      <p class="hint">Pobrany <span class="mono">presets.json</span> podmieniasz w
+        <span class="mono">tools/render-binaural/</span> — tryb wsadowy wyrenderuje wtedy
+        dokładnie to, co słyszysz.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Log</h2>
+      <div id="log">Gotowy.</div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap" style="padding-top:0">
+  <div class="warn" style="grid-column:1/-1">
+    <strong>Uwaga o powtarzalności.</strong> Ziarno pogłosu
+    (<span class="mono">irSeed</span>) jest zapisane w presecie i nie zmienia się przy strojeniu.
+    Dzięki temu każdy render tego samego presetu daje ten sam plik co do bitu. Jeśli świadomie
+    chcesz inny wzór pogłosu, zmień <span class="mono">irSeed</span> w pobranym
+    <span class="mono">presets.json</span>.
+  </div>
+</div>
+
+<script src="render-core.js"></script>
+<script>
+'use strict';
+
+var BASE = '../..';          // katalog główny repozytorium względem tego pliku
+var DATA = null;             // { engine, voicePositions, presets }
+var LIB  = null;             // manifest.json aplikacji — sceny i obiekty do wyboru
+var cur  = null;             // aktualny preset (referencja do obiektu w DATA)
+var preview = null;
+var selectedObj = null;
+
+var logEl = document.getElementById('log');
+function log(msg, cls) {
+  var d = document.createElement('div');
+  if (cls) d.className = cls;
+  d.textContent = msg;
+  logEl.appendChild(d);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function fmtTime(s) {
+  if (!isFinite(s)) return '–:––';
+  var m = Math.floor(s / 60), r = Math.floor(s % 60);
+  return m + ':' + (r < 10 ? '0' : '') + r;
+}
+function download(name, data, mime) {
+  var blob = new Blob([data], { type: mime || 'application/octet-stream' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); }, 15000);
+}
+
+/* ---------- wczytanie danych ---------- */
+Promise.all([
+  fetch('presets.json').then(function (r) { return r.json(); }),
+  fetch(BASE + '/manifest.json').then(function (r) { return r.json(); }).catch(function () { return null; })
+]).then(function (res) {
+  DATA = res[0];
+  LIB = res[1];
+  var sel = document.getElementById('presetSel');
+  DATA.presets.forEach(function (p, i) {
+    var o = document.createElement('option');
+    o.value = String(i);
+    o.textContent = p.index + '. ' + p.title;
+    sel.appendChild(o);
+  });
+  fillSceneOptions();
+  fillAddOptions();
+  loadPreset(0);
+  log('Wczytano ' + DATA.presets.length + ' presetów.' + (LIB ? ' Biblioteka aplikacji dostępna.' : ' Bez manifest.json — listy wyboru ograniczone.'));
+}).catch(function (e) { log('Nie wczytano danych: ' + e.message, 'err'); });
+
+function fillSceneOptions() {
+  var sel = document.getElementById('sceneSel');
+  sel.innerHTML = '';
+  var list = (LIB && LIB.ambient) ? LIB.ambient : [];
+  if (!list.length && cur && cur.scene) list = [{ id: cur.scene.id, title: cur.scene.id, src: { webm: cur.scene.file } }];
+  list.forEach(function (s) {
+    var o = document.createElement('option');
+    o.value = s.id;
+    o.textContent = (s.title || s.id) + '  (' + s.id + ')';
+    sel.appendChild(o);
+  });
+}
+function fillAddOptions() {
+  var sel = document.getElementById('addSel');
+  sel.innerHTML = '';
+  var list = (LIB && LIB.objects) ? LIB.objects : [];
+  list.forEach(function (o) {
+    var op = document.createElement('option');
+    op.value = o.id;
+    op.textContent = (o.title || o.id) + '  (' + o.id + ')';
+    sel.appendChild(op);
+  });
+}
+function sceneFileFor(id) {
+  var s = (LIB && LIB.ambient || []).find(function (x) { return x.id === id; });
+  return s && s.src ? s.src.webm : 'assets/audio/scenes/' + id + '.webm';
+}
+function objectFileFor(id) {
+  var o = (LIB && LIB.objects || []).find(function (x) { return x.id === id; });
+  return o && o.src ? o.src.webm : 'assets/audio/objects/' + id + '.webm';
+}
+
+/* ---------- wiązanie suwaków ---------- */
+function bindRange(id, get, set, fmt) {
+  var el = document.getElementById(id);
+  var out = document.getElementById(id + 'V');
+  el.addEventListener('input', function () {
+    var v = parseFloat(el.value);
+    set(v);
+    out.textContent = fmt ? fmt(v) : v.toFixed(2);
+  });
+  return {
+    sync: function () {
+      var v = get();
+      el.value = v;
+      out.textContent = fmt ? fmt(v) : Number(v).toFixed(2);
+    }
+  };
+}
+
+var bMaster = bindRange('master', function () { return DATA.engine.masterVolume; },
+  function (v) { DATA.engine.masterVolume = v; if (preview) preview.setMaster(v); });
+var bDry = bindRange('dry', function () { return DATA.engine.dryLevel; },
+  function (v) { DATA.engine.dryLevel = v; if (preview) preview.setDry(v); });
+var bWet = bindRange('wet', function () { return DATA.engine.wetLevel; },
+  function (v) { DATA.engine.wetLevel = v; if (preview) preview.setWet(v); }, function (v) { return v.toFixed(3); });
+var bRevDur = bindRange('revDur', function () { return DATA.engine.reverbDuration; },
+  function (v) { DATA.engine.reverbDuration = v; rebuildReverb(); }, function (v) { return v.toFixed(1) + ' s'; });
+var bRevDec = bindRange('revDec', function () { return DATA.engine.reverbDecay; },
+  function (v) { DATA.engine.reverbDecay = v; rebuildReverb(); }, function (v) { return v.toFixed(1); });
+var bVoiceVol = bindRange('voiceVol', function () { return cur.voice.volume; },
+  function (v) { cur.voice.volume = v; if (preview) preview.setVoiceVolume(v); });
+var bSceneVol = bindRange('sceneVol', function () { return cur.scene ? cur.scene.volume : 0; },
+  function (v) { if (cur.scene) { cur.scene.volume = v; if (preview) preview.setSceneVolume(v); } });
+
+var reverbTimer = null;
+function rebuildReverb() {
+  if (!preview) return;
+  clearTimeout(reverbTimer);
+  reverbTimer = setTimeout(function () {
+    preview.rebuildReverb(DATA.engine.reverbDuration, DATA.engine.reverbDecay, cur.irSeed);
+  }, 120);
+}
+
+document.getElementById('voicePos').addEventListener('change', function (e) {
+  cur.voice.position = e.target.value;
+  if (preview) preview.setVoicePos(e.target.value);
+});
+document.getElementById('sceneSel').addEventListener('change', function (e) {
+  if (!cur.scene) cur.scene = { id: e.target.value, file: '', volume: 0.4 };
+  cur.scene.id = e.target.value;
+  cur.scene.file = sceneFileFor(e.target.value);
+  log('Scena → ' + e.target.value + '. Zrestartuj podsłuch, żeby ją usłyszeć.');
+});
+
+/* ---------- preset ---------- */
+document.getElementById('presetSel').addEventListener('change', function (e) {
+  loadPreset(parseInt(e.target.value, 10));
+});
+
+function loadPreset(i) {
+  stopPreview();
+  cur = DATA.presets[i];
+  selectedObj = (cur.objects && cur.objects[0]) ? cur.objects[0].id : null;
+  bMaster.sync(); bDry.sync(); bWet.sync(); bRevDur.sync(); bRevDec.sync();
+  bVoiceVol.sync(); bSceneVol.sync();
+  document.getElementById('voicePos').value = cur.voice.position;
+  if (cur.scene) document.getElementById('sceneSel').value = cur.scene.id;
+  renderObjTable();
+  drawRadar();
+}
+
+/* ---------- obiekty ---------- */
+function renderObjTable() {
+  var tb = document.getElementById('objBody');
+  tb.innerHTML = '';
+  (cur.objects || []).forEach(function (o) {
+    var tr = document.createElement('tr');
+    if (o.id === selectedObj) tr.className = 'sel';
+    tr.innerHTML =
+      '<td class="mono">' + o.id + '</td>' +
+      '<td class="mono">' + o.azimuth + '°</td>' +
+      '<td class="mono">' + o.distance + ' m</td>' +
+      '<td class="mono">' + (o.elevation >= 0 ? '+' : '') + o.elevation + '°</td>' +
+      '<td class="mono">' + o.volume.toFixed(2) + '</td>' +
+      '<td><button data-sel="' + o.id + '">wybierz</button> ' +
+      '<button data-del="' + o.id + '">usuń</button></td>';
+    tb.appendChild(tr);
+  });
+  renderObjEditor();
+}
+
+function renderObjEditor() {
+  var box = document.getElementById('objEdit');
+  var o = (cur.objects || []).find(function (x) { return x.id === selectedObj; });
+  if (!o) { box.innerHTML = '<p class="hint">Nie wybrano obiektu.</p>'; return; }
+  box.innerHTML =
+    '<div class="row"><span class="name">azymut</span>' +
+    '<input type="range" id="oAz" min="0" max="359" step="1" value="' + o.azimuth + '"><span class="val" id="oAzV">' + o.azimuth + '°</span></div>' +
+    '<div class="row"><span class="name">odległość</span>' +
+    '<input type="range" id="oDist" min="1" max="100" step="1" value="' + o.distance + '"><span class="val" id="oDistV">' + o.distance + ' m</span></div>' +
+    '<div class="row"><span class="name">elewacja</span>' +
+    '<input type="range" id="oEl" min="-90" max="90" step="1" value="' + o.elevation + '"><span class="val" id="oElV">' + (o.elevation >= 0 ? '+' : '') + o.elevation + '°</span></div>' +
+    '<div class="row"><span class="name">głośność</span>' +
+    '<input type="range" id="oVol" min="0" max="1.5" step="0.01" value="' + o.volume + '"><span class="val" id="oVolV">' + o.volume.toFixed(2) + '</span></div>';
+
+  function apply() {
+    if (preview) {
+      preview.setObjectPosition(o.id, o.azimuth, o.elevation, o.distance);
+      preview.setObjectVolume(o.id, o.volume);
+    }
+    drawRadar();
+    syncTableRow(o);
+  }
+  document.getElementById('oAz').addEventListener('input', function (e) {
+    o.azimuth = parseInt(e.target.value, 10);
+    document.getElementById('oAzV').textContent = o.azimuth + '°'; apply();
+  });
+  document.getElementById('oDist').addEventListener('input', function (e) {
+    o.distance = parseInt(e.target.value, 10);
+    document.getElementById('oDistV').textContent = o.distance + ' m'; apply();
+  });
+  document.getElementById('oEl').addEventListener('input', function (e) {
+    o.elevation = parseInt(e.target.value, 10);
+    document.getElementById('oElV').textContent = (o.elevation >= 0 ? '+' : '') + o.elevation + '°'; apply();
+  });
+  document.getElementById('oVol').addEventListener('input', function (e) {
+    o.volume = parseFloat(e.target.value);
+    document.getElementById('oVolV').textContent = o.volume.toFixed(2); apply();
+  });
+}
+
+function syncTableRow(o) {
+  var rows = document.querySelectorAll('#objBody tr');
+  (cur.objects || []).forEach(function (x, i) {
+    if (x !== o || !rows[i]) return;
+    var td = rows[i].children;
+    td[1].textContent = o.azimuth + '°';
+    td[2].textContent = o.distance + ' m';
+    td[3].textContent = (o.elevation >= 0 ? '+' : '') + o.elevation + '°';
+    td[4].textContent = o.volume.toFixed(2);
+  });
+}
+
+document.getElementById('objBody').addEventListener('click', function (e) {
+  var s = e.target.dataset && e.target.dataset.sel;
+  var d = e.target.dataset && e.target.dataset.del;
+  if (s) { selectedObj = s; renderObjTable(); drawRadar(); }
+  if (d) {
+    cur.objects = (cur.objects || []).filter(function (x) { return x.id !== d; });
+    if (selectedObj === d) selectedObj = cur.objects[0] ? cur.objects[0].id : null;
+    renderObjTable(); drawRadar();
+    log('Usunięto obiekt ' + d + '. Zrestartuj podsłuch.');
+  }
+});
+
+document.getElementById('addBtn').addEventListener('click', function () {
+  var id = document.getElementById('addSel').value;
+  if (!id) return;
+  cur.objects = cur.objects || [];
+  if (cur.objects.some(function (x) { return x.id === id; })) { log('Obiekt ' + id + ' już jest w preseticie.'); return; }
+  if (cur.objects.length >= 5) { log('Limit 5 jednoczesnych panerów HRTF.', 'err'); return; }
+  cur.objects.push({ id: id, file: objectFileFor(id), azimuth: 0, elevation: 0, distance: 15, volume: 0.5 });
+  selectedObj = id;
+  renderObjTable(); drawRadar();
+  log('Dodano obiekt ' + id + '. Zrestartuj podsłuch.');
+});
+
+/* ---------- radar ---------- */
+var canvas = document.getElementById('radar');
+var g = canvas.getContext('2d');
+
+function radarGeom() {
+  var w = canvas.width, h = canvas.height;
+  return { w: w, h: h, cx: w / 2, cy: h / 2, maxR: Math.min(w, h) / 2.3 };
+}
+
+function drawRadar() {
+  var m = radarGeom();
+  g.clearRect(0, 0, m.w, m.h);
+
+  g.strokeStyle = 'rgba(156,152,144,.25)';
+  g.lineWidth = 1;
+  [0.25, 0.5, 0.75, 1].forEach(function (f) {
+    g.beginPath(); g.arc(m.cx, m.cy, m.maxR * f, 0, Math.PI * 2); g.stroke();
+  });
+  g.beginPath(); g.moveTo(m.cx, m.cy - m.maxR); g.lineTo(m.cx, m.cy + m.maxR);
+  g.moveTo(m.cx - m.maxR, m.cy); g.lineTo(m.cx + m.maxR, m.cy); g.stroke();
+
+  g.fillStyle = 'rgba(156,152,144,.75)';
+  g.font = '10px "Azeret Mono",monospace';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('PRZÓD 0°', m.cx, m.cy - m.maxR - 12);
+  g.fillText('TYŁ 180°', m.cx, m.cy + m.maxR + 12);
+  g.fillText('270°', m.cx - m.maxR - 18, m.cy);
+  g.fillText('90°', m.cx + m.maxR + 18, m.cy);
+
+  g.fillStyle = '#00E5CC';
+  g.font = '16px sans-serif';
+  g.fillText('◉', m.cx, m.cy);
+
+  (cur && cur.objects || []).forEach(function (o) {
+    var rad = (o.azimuth * Math.PI) / 180;
+    var vr = (o.distance / 100) * m.maxR;
+    var x = m.cx + vr * Math.sin(rad);
+    var y = m.cy - vr * Math.cos(rad);
+    var isSel = o.id === selectedObj;
+
+    g.fillStyle = 'rgba(10,12,8,.55)';
+    g.strokeStyle = isSel ? '#00E5CC' : '#FFAB00';
+    g.lineWidth = isSel ? 2 : 1;
+    g.beginPath(); g.arc(x, y, 22, 0, Math.PI * 2); g.fill(); g.stroke();
+
+    g.fillStyle = '#FFAB00';
+    g.font = '13px sans-serif';
+    g.fillText('◈', x, y);
+
+    g.fillStyle = 'rgba(156,152,144,.9)';
+    g.font = '9px "Azeret Mono",monospace';
+    g.fillText(o.id, x, y >= m.cy ? y + 30 : y - 30);
+    if (o.elevation) {
+      g.fillText((o.elevation > 0 ? '+' : '') + o.elevation + '°', x, y >= m.cy ? y + 41 : y - 41);
+    }
+  });
+}
+
+function canvasPoint(e) {
+  var r = canvas.getBoundingClientRect();
+  var p = e.touches ? e.touches[0] : e;
+  return {
+    x: (p.clientX - r.left) * (canvas.width / r.width),
+    y: (p.clientY - r.top) * (canvas.height / r.height)
+  };
+}
+function objectAt(x, y) {
+  var m = radarGeom();
+  var found = null;
+  (cur && cur.objects || []).forEach(function (o) {
+    var rad = (o.azimuth * Math.PI) / 180;
+    var vr = (o.distance / 100) * m.maxR;
+    var ox = m.cx + vr * Math.sin(rad);
+    var oy = m.cy - vr * Math.cos(rad);
+    if (Math.sqrt((x - ox) * (x - ox) + (y - oy) * (y - oy)) < 26) found = o;
+  });
+  return found;
+}
+var dragging = null;
+function moveTo(o, x, y) {
+  var m = radarGeom();
+  var dx = x - m.cx, dy = m.cy - y;
+  var az = Math.atan2(dx, dy) * (180 / Math.PI);
+  if (az < 0) az += 360;
+  var dist = Math.sqrt(dx * dx + dy * dy) / m.maxR * 100;
+  o.azimuth = Math.round(az);
+  o.distance = Math.max(1, Math.min(100, Math.round(dist)));
+  if (preview) preview.setObjectPosition(o.id, o.azimuth, o.elevation, o.distance);
+  drawRadar();
+  syncTableRow(o);
+  var az2 = document.getElementById('oAz'), d2 = document.getElementById('oDist');
+  if (az2 && selectedObj === o.id) {
+    az2.value = o.azimuth; document.getElementById('oAzV').textContent = o.azimuth + '°';
+    d2.value = o.distance; document.getElementById('oDistV').textContent = o.distance + ' m';
+  }
+}
+function onDown(e) {
+  var p = canvasPoint(e);
+  var o = objectAt(p.x, p.y);
+  if (!o) return;
+  e.preventDefault();
+  dragging = o;
+  selectedObj = o.id;
+  canvas.classList.add('drag');
+  renderObjTable(); drawRadar();
+}
+function onMove(e) { if (dragging) { e.preventDefault(); var p = canvasPoint(e); moveTo(dragging, p.x, p.y); } }
+function onUp() { dragging = null; canvas.classList.remove('drag'); }
+canvas.addEventListener('mousedown', onDown);
+window.addEventListener('mousemove', onMove);
+window.addEventListener('mouseup', onUp);
+canvas.addEventListener('touchstart', onDown, { passive: false });
+canvas.addEventListener('touchmove', onMove, { passive: false });
+canvas.addEventListener('touchend', onUp);
+
+/* ---------- podsłuch ---------- */
+var playBtn = document.getElementById('playBtn');
+var timeLbl = document.getElementById('timeLbl');
+
+function stopPreview() {
+  if (!preview) return;
+  preview.destroy();
+  preview = null;
+  playBtn.textContent = '▶ Podsłuch';
+}
+
+playBtn.addEventListener('click', async function () {
+  if (preview && preview.playing) { preview.pause(); playBtn.textContent = '▶ Podsłuch'; return; }
+  try {
+    if (!preview) {
+      log('Uruchamianie podsłuchu…');
+      preview = SALRender.createPreview(DATA.engine, DATA.voicePositions, cur, BASE);
+      await preview.ready;
+    }
+    var from = parseFloat(document.getElementById('startAt').value) || 0;
+    await preview.play(preview.currentTime > 0.5 ? undefined : from);
+    playBtn.textContent = '❚❚ Pauza';
+    log('Podsłuch gra. Suwaki działają na żywo.', 'ok');
+  } catch (err) {
+    log('Podsłuch: ' + err.message, 'err');
+    stopPreview();
+  }
+});
+
+setInterval(function () {
+  if (!preview) { timeLbl.textContent = '–:–– / –:––'; return; }
+  timeLbl.textContent = fmtTime(preview.currentTime) + ' / ' + fmtTime(preview.duration);
+}, 400);
+
+/* ---------- wyjście ---------- */
+function stamp() {
+  var d = new Date();
+  var p = function (n) { return (n < 10 ? '0' : '') + n; };
+  return p(d.getDate()) + '.' + p(d.getMonth() + 1) + '.' + d.getFullYear()
+       + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
+async function doRender(opts, suffix) {
+  stopPreview();
+  var t0 = performance.now();
+  log('Render ' + cur.slug + (suffix || '') + '…');
+  var buf = await SALRender.renderPreset(DATA.engine, DATA.voicePositions, cur, BASE,
+    function (m) { log('   ' + m); }, opts);
+  var wav = SALRender.bufferToWav24(buf);
+  download(cur.slug + (suffix || '') + '.wav', wav, 'audio/wav');
+  log('Gotowe: ' + (wav.byteLength / 1048576).toFixed(1) + ' MB w '
+      + ((performance.now() - t0) / 1000).toFixed(1) + ' s', 'ok');
+  return buf;
+}
+
+document.getElementById('fragBtn').addEventListener('click', async function (e) {
+  e.target.disabled = true;
+  try {
+    var from = parseFloat(document.getElementById('startAt').value) || 0;
+    await doRender({ maxSeconds: 20, offsetSeconds: from }, '_FRAGMENT');
+  } catch (err) { log(err.message, 'err'); }
+  e.target.disabled = false;
+});
+
+document.getElementById('renderBtn').addEventListener('click', async function (e) {
+  e.target.disabled = true;
+  try {
+    var buf = await doRender(null, '');
+    download(cur.slug + '_META.txt',
+      SALRender.buildMetaText(DATA.engine, cur, { renderDate: stamp(), seconds: buf.duration }),
+      'text/plain;charset=utf-8');
+  } catch (err) { log(err.message, 'err'); }
+  e.target.disabled = false;
+});
+
+document.getElementById('exportBtn').addEventListener('click', function () {
+  download('presets.json', JSON.stringify(DATA, null, 2), 'application/json;charset=utf-8');
+  log('Pobrano presets.json — podmień plik w tools/render-binaural/.', 'ok');
+});
+document.getElementById('metaBtn').addEventListener('click', function () {
+  download(cur.slug + '_META.txt',
+    SALRender.buildMetaText(DATA.engine, cur, { renderDate: stamp() }),
+    'text/plain;charset=utf-8');
+});
+document.getElementById('clearLog');
+</script>
+</body>
+</html>

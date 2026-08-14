@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Przestrzeń Relaksu — render binauralny</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin:0; padding:2rem; background:#0e1116; color:#e6e9ef;
+         font-family:'Lexend',system-ui,-apple-system,'Segoe UI',sans-serif; line-height:1.5; }
+  h1 { font-size:1.4rem; margin:0 0 .25rem; }
+  .sub { color:#9aa4b2; margin:0 0 1.5rem; font-size:.9rem; }
+  table { border-collapse:collapse; width:100%; max-width:900px; margin-bottom:1.5rem; }
+  th,td { text-align:left; padding:.55rem .7rem; border-bottom:1px solid #232936; font-size:.88rem; }
+  th { color:#9aa4b2; font-weight:600; }
+  code, .mono { font-family:'Azeret Mono',ui-monospace,'SF Mono',Consolas,monospace; font-size:.82rem; }
+  button { font:inherit; padding:.6rem 1.1rem; border-radius:.5rem; border:1px solid #2f6feb;
+           background:#2f6feb; color:#fff; cursor:pointer; min-height:44px; }
+  button.ghost { background:transparent; color:#8ab4ff; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  button:focus-visible { outline:2px solid #8ab4ff; outline-offset:2px; }
+  #log { background:#151a23; border:1px solid #232936; border-radius:.5rem; padding:1rem;
+         max-width:900px; min-height:6rem; white-space:pre-wrap; font-family:'Azeret Mono',monospace;
+         font-size:.8rem; color:#b9c2d0; }
+  .status { color:#7ee2a8; }
+  .err { color:#ff8f8f; }
+</style>
+</head>
+<body>
+<h1>Przestrzeń Relaksu — render binauralny</h1>
+<p class="sub">Utrwala przestrzenny miks aplikacji jako stały plik stereo. Wymaga uruchomienia
+przez serwer HTTP (nie <code>file://</code>).</p>
+
+<table id="tbl"><thead><tr>
+  <th>#</th><th>Plik wynikowy</th><th>Medytacja</th><th>Scena</th><th>Obiekty 3D</th><th></th>
+</tr></thead><tbody></tbody></table>
+
+<p>
+  <button id="all">Renderuj wszystkie</button>
+  <button id="clear" class="ghost">Wyczyść log</button>
+</p>
+
+<div id="log">Gotowy.</div>
+
+<script src="render-core.js"></script>
+<script>
+'use strict';
+let DATA = null;
+const logEl = document.getElementById('log');
+function log(msg, cls) {
+  const line = document.createElement('div');
+  if (cls) line.className = cls;
+  line.textContent = msg;
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function download(name, arrayBuffer) {
+  const blob = new Blob([arrayBuffer], { type: 'audio/wav' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+}
+
+async function renderOne(preset) {
+  const t0 = performance.now();
+  log('▶ ' + preset.slug + ' — start');
+  const buf = await SALRender.renderPreset(
+    DATA.engine, DATA.voicePositions, preset, '..',
+    (m) => log('   ' + m)
+  );
+  const wav = SALRender.bufferToWav24(buf);
+  download(preset.slug + '.wav', wav);
+  log('✔ ' + preset.slug + '.wav — ' + (wav.byteLength / 1048576).toFixed(1) + ' MB, '
+      + ((performance.now() - t0) / 1000).toFixed(1) + ' s', 'status');
+}
+
+fetch('presets.json').then(r => r.json()).then(d => {
+  DATA = d;
+  const tb = document.querySelector('#tbl tbody');
+  d.presets.forEach(p => {
+    const tr = document.createElement('tr');
+    const objs = (p.objects || []).map(o =>
+      o.id + ' ' + o.azimuth + '° / ' + o.distance + ' m').join('<br>') || '—';
+    tr.innerHTML = '<td class="mono">' + p.index + '</td>'
+      + '<td class="mono">' + p.slug + '.wav</td>'
+      + '<td>' + p.title + '</td>'
+      + '<td class="mono">' + (p.scene ? p.scene.id : '—') + '</td>'
+      + '<td class="mono">' + objs + '</td>'
+      + '<td><button data-id="' + p.id + '">Renderuj</button></td>';
+    tb.appendChild(tr);
+  });
+  tb.addEventListener('click', async (e) => {
+    const id = e.target.dataset && e.target.dataset.id;
+    if (!id) return;
+    e.target.disabled = true;
+    try { await renderOne(d.presets.find(x => x.id === id)); }
+    catch (err) { log('✖ ' + err.message, 'err'); }
+    e.target.disabled = false;
+  });
+  log('Wczytano ' + d.presets.length + ' presetów.');
+}).catch(e => log('✖ Nie wczytano presets.json: ' + e.message, 'err'));
+
+document.getElementById('all').addEventListener('click', async (e) => {
+  e.target.disabled = true;
+  for (const p of DATA.presets) {
+    try { await renderOne(p); }
+    catch (err) { log('✖ ' + p.slug + ': ' + err.message, 'err'); }
+  }
+  e.target.disabled = false;
+});
+document.getElementById('clear').addEventListener('click', () => { logEl.textContent = ''; });
+</script>
+</body>
+</html>

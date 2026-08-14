@@ -1,0 +1,92 @@
+{
+  "_comment": "Presety renderowania binauralnego dla wskaźnika własnego nr 3 (KPO 143/KPO.STYPENDIA/NIMiT/2025). Każdy preset opisuje komplet parametrów, z których powstaje jeden plik SAL_RELAX_NN_Binauralny. Renderowanie jest deterministyczne: ziarno PRNG dla odpowiedzi impulsowej pogłosu jest zapisane w polu irSeed, więc powtórny render daje bit w bit ten sam plik.",
+  "engine": {
+    "sampleRate": 48000,
+    "masterVolume": 0.8,
+    "dryLevel": 0.85,
+    "wetLevel": 0.16,
+    "reverbDuration": 1.4,
+    "reverbDecay": 3.0,
+    "voicePanningModel": "equalpower",
+    "objectPanningModel": "HRTF",
+    "distanceModel": "linear",
+    "refDistance": 1,
+    "rolloffFactor": 0.96,
+    "maxDistance": 100,
+    "reverbTailSeconds": 3.0,
+    "sceneFadeSeconds": 4.0
+  },
+  "voicePositions": {
+    "left": { "x": -0.866, "y": 0, "z": -0.5 },
+    "center": { "x": 0, "y": 0, "z": -1 },
+    "right": { "x": 0.866, "y": 0, "z": -0.5 }
+  },
+  "presets": [
+    {
+      "index": 1,
+      "id": "oddech-w-ciele",
+      "slug": "SAL_RELAX_01_Binauralny",
+      "title": "Oddech w ciele",
+      "skrypt": "1. REDAKCJA_ Zredagowany Skrypt Medytacji Oddech w ciele.docx",
+      "voice": { "file": "assets/audio/voice/oddech-w-ciele.webm", "position": "center", "volume": 1.0 },
+      "scene": { "id": "summer-forest", "file": "assets/audio/scenes/summer-forest.webm", "volume": 0.42 },
+      "objects": [
+        { "id": "blackbird", "file": "assets/audio/objects/blackbird.webm", "azimuth": 45, "elevation": 12, "distance": 14, "volume": 0.55 }
+      ],
+      "irSeed": 1001
+    },
+    {
+      "index": 2,
+      "id": "3-stop-oddech",
+      "slug": "SAL_RELAX_02_Binauralny",
+      "title": "Trzystopniowa przestrzeń na oddech",
+      "skrypt": "2. REDAKCJA_ Trzystopniowa Przestrzeń na Oddech.docx",
+      "voice": { "file": "assets/audio/voice/3-stop-oddech.webm", "position": "center", "volume": 1.0 },
+      "scene": { "id": "mountain-meadow", "file": "assets/audio/scenes/mountain-meadow.webm", "volume": 0.38 },
+      "objects": [
+        { "id": "bell", "file": "assets/audio/objects/bell.webm", "azimuth": 0, "elevation": 0, "distance": 6, "volume": 0.5 }
+      ],
+      "irSeed": 1002
+    },
+    {
+      "index": 3,
+      "id": "uwazne-chodzenie",
+      "slug": "SAL_RELAX_03_Binauralny",
+      "title": "Uważne chodzenie",
+      "skrypt": "3. REDAKCJA_ Skrypt Uważnego Chodzenia.docx",
+      "voice": { "file": "assets/audio/voice/uwazne-chodzenie.webm", "position": "center", "volume": 1.0 },
+      "scene": { "id": "summer-forest", "file": "assets/audio/scenes/summer-forest.webm", "volume": 0.4 },
+      "objects": [
+        { "id": "stream", "file": "assets/audio/objects/stream.webm", "azimuth": 300, "elevation": -5, "distance": 9, "volume": 0.5 },
+        { "id": "blackbird", "file": "assets/audio/objects/blackbird.webm", "azimuth": 80, "elevation": 20, "distance": 18, "volume": 0.45 }
+      ],
+      "irSeed": 1003
+    },
+    {
+      "index": 4,
+      "id": "body-scan",
+      "slug": "SAL_RELAX_04_Binauralny",
+      "title": "Podróż przez ciało",
+      "skrypt": "4. REDAKCJA_ Skrypt Głębokiego Skanowania Ciała.docx",
+      "voice": { "file": "assets/audio/voice/body-scan.webm", "position": "center", "volume": 1.0 },
+      "scene": { "id": "beach", "file": "assets/audio/scenes/beach.webm", "volume": 0.36 },
+      "objects": [
+        { "id": "stream", "file": "assets/audio/objects/stream.webm", "azimuth": 200, "elevation": -8, "distance": 22, "volume": 0.4 }
+      ],
+      "irSeed": 1004
+    },
+    {
+      "index": 5,
+      "id": "praca-z-dyskomfortem",
+      "slug": "SAL_RELAX_05_Binauralny",
+      "title": "Praca z dyskomfortem",
+      "skrypt": "5. REDAKCJA_ Skrypt Medytacji Siedzącej - praca z dyskomfortem.docx",
+      "voice": { "file": "assets/audio/voice/praca-z-dyskomfortem.webm", "position": "center", "volume": 1.0 },
+      "scene": { "id": "night-cicadas", "file": "assets/audio/scenes/night-cicadas.webm", "volume": 0.34 },
+      "objects": [
+        { "id": "bell", "file": "assets/audio/objects/bell.webm", "azimuth": 330, "elevation": 5, "distance": 11, "volume": 0.45 }
+      ],
+      "irSeed": 1005
+    }
+  ]
+}
