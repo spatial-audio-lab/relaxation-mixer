@@ -90,9 +90,23 @@ Zapisuje pliki WAV i `_render-report.json` z długościami oraz rozmiarami.
 
 W aplikacji odpowiedź impulsowa pogłosu powstaje z `Math.random()` — przy każdym
 uruchomieniu jest inna. Tutaj generuje ją deterministyczny PRNG (mulberry32) z ziarnem
-zapisanym w `presets.json` jako `irSeed`. **Ten sam preset zawsze daje ten sam plik**,
-co do bitu. Render da się więc powtórzyć i zweryfikować — co przy dokumentacji projektu
-jest mocnym argumentem, bo plik przestaje być „czymś, co ktoś kiedyś wyeksportował".
+zapisanym w `presets.json` jako `irSeed`. Render przestaje więc być jednorazowym zdarzeniem.
+
+Zakres tej powtarzalności ma jednak granicę, o której trzeba wiedzieć:
+
+| Warunki | Wynik |
+|---|---|
+| ten sam silnik, ta sama maszyna | **plik identyczny co do bitu** (zweryfikowane sumami kontrolnymi) |
+| inny silnik lub inna wersja przeglądarki | ta sama treść i długość, **inny przebieg próbek** |
+
+Drugi przypadek to nie błąd narzędzia. `PannerNode` z modelem `HRTF`, `ConvolverNode`
+i dekoder Opusa są częścią przeglądarki, a ich implementacje różnią się między wydaniami
+i systemami. Render z desktopowego Chrome i render z headless Chromium dają materiał
+brzmiący tak samo, ale nie ten sam plik — sprawdzone bezpośrednio na tym projekcie.
+
+**Praktyczny wniosek:** jeśli zależy Ci na bitowej zgodności zestawu, wyrenderuj wszystkie
+pozycje w jednym środowisku i zanotuj, w jakim. Jeśli wystarczy odtwarzalność procedury —
+`presets.json` plus plik `*_META.txt` wystarczą, żeby każdy mógł render powtórzyć.
 
 Strojenie suwakami **nie zmienia** `irSeed`. Jeśli świadomie chcesz inny wzór pogłosu,
 zmień tę wartość ręcznie w pobranym `presets.json`.
