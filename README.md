@@ -184,7 +184,16 @@ Serwer powinien obsługiwać nagłówek `Range` — bez tego `<audio>` nie przew
 
 ---
 
-## 8. Finansowanie
+## 8. O projekcie
+
+# Spatial Audio Lab: archiwum VR dla edukacji teatralnej
+„Spatial Audio Lab” to projekt stypendialny skupiony na tworzeniu profesjonalnego archiwum dźwięku przestrzennego. W ramach działań powstaje baza nagrań w technologii Virtual Reality (VR), która łączy nowoczesną inżynierię dźwięku z edukacją teatralną i technikami uważności (mindfulness).
+
+[https://spatial-audio-lab.github.io/](https://spatial-audio-lab.github.io/)
+
+---
+
+## 9. Finansowanie
 
 ![Zestawienie logotypów KPO, RP i UE](https://raw.githubusercontent.com/spatial-audio-lab/spatial-audio-lab.github.io/main/KPO.jpg)
 
@@ -197,14 +206,7 @@ Projekt jest realizowany w ramach programu stypendialnego Krajowego Planu Odbudo
 - **Wartość dofinansowania z Unii Europejskiej (NextGenerationEU):** 36 000,00 zł brutto.
 - Umowa nr **143/KPO.STYPENDIA/NIMIT/2025**.
 
----
 
-## 9. O projekcie
-
-# Spatial Audio Lab: archiwum VR dla edukacji teatralnej
-„Spatial Audio Lab” to projekt stypendialny skupiony na tworzeniu profesjonalnego archiwum dźwięku przestrzennego. W ramach działań powstaje baza nagrań w technologii Virtual Reality (VR), która łączy nowoczesną inżynierię dźwięku z edukacją teatralną i technikami uważności (mindfulness).
-
-[https://spatial-audio-lab.github.io/](https://spatial-audio-lab.github.io/)
 
 ---
 ## 9. Licencja
